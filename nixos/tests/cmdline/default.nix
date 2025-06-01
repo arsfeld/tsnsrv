@@ -8,4 +8,5 @@
   validatorPackage,
 }: {
   all = import ./all.nix {inherit pkgs nixos-lib nixosModule validatorPackage;};
+  auth = import ./auth.nix {inherit pkgs nixos-lib nixosModule validatorPackage;};
 }
