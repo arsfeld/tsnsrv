@@ -221,6 +221,41 @@
         defaultText = lib.literalExpression "config.services.tsnsrv.defaults.upstreamAllowInsecureCiphers";
       };
 
+      authURL = mkOption {
+        description = "Authorization service URL for forward auth (e.g., http://authelia:9091). If set, all requests will be validated against this service before being proxied.";
+        type = with types; nullOr str;
+        default = defaults.authURL;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authURL";
+      };
+
+      authPath = mkOption {
+        description = "Authorization service endpoint path";
+        type = types.str;
+        default = defaults.authPath;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authPath";
+      };
+
+      authTimeout = mkOption {
+        description = "Timeout for authorization requests";
+        type = with types; nullOr str;
+        default = defaults.authTimeout;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authTimeout";
+      };
+
+      authCopyHeaders = mkOption {
+        description = "Headers to copy from auth response to upstream request";
+        type = types.attrsOf types.str;
+        default = defaults.authCopyHeaders;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authCopyHeaders";
+      };
+
+      authInsecureHTTPS = mkOption {
+        description = "Disable TLS certificate validation for auth service";
+        type = types.bool;
+        default = defaults.authInsecureHTTPS;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authInsecureHTTPS";
+      };
+
       extraArgs = mkOption {
         description = "Extra arguments to pass to this tsnsrv process.";
         type = types.listOf types.str;
@@ -253,7 +288,11 @@
       "-readHeaderTimeout=${readHeaderTimeout}"
       "-tsnetVerbose=${lib.boolToString service.tsnetVerbose}"
       "-upstreamAllowInsecureCiphers=${lib.boolToString service.upstreamAllowInsecureCiphers}"
+      "-authInsecureHTTPS=${lib.boolToString service.authInsecureHTTPS}"
+      "-authPath=${service.authPath}"
     ]
+    ++ lib.optionals (service.authURL != null) ["-authURL=${service.authURL}"]
+    ++ lib.optionals (service.authTimeout != null) ["-authTimeout=${service.authTimeout}"]
     ++ lib.optionals (service.whoisTimeout != null) ["-whoisTimeout" service.whoisTimeout]
     ++ lib.optionals (service.upstreamUnixAddr != null) ["-upstreamUnixAddr" service.upstreamUnixAddr]
     ++ lib.optionals (service.certificateFile != null && service.certificateKey != null) [
@@ -264,6 +303,7 @@
     ++ map (t: "-tag=${t}") service.tags
     ++ map (p: "-prefix=${p}") service.prefixes
     ++ map (h: "-upstreamHeader=${h}") (lib.mapAttrsToList (name: service: "${name}: ${service}") service.upstreamHeaders)
+    ++ map (h: "-authCopyHeader=${h}") (lib.mapAttrsToList (name: value: "${name}: ${value}") service.authCopyHeaders)
     ++ service.extraArgs
     ++ [service.toURL];
 in {
@@ -349,6 +389,42 @@ in {
 
       upstreamAllowInsecureCiphers = mkOption {
         description = "Whether to require the upstream to support Perfect Forward Secrecy cipher suites. If a connection attempt to an upstream returns the error `remote error: tls: handshake failure`, try setting this to true.";
+        type = types.bool;
+        default = false;
+      };
+
+      authURL = mkOption {
+        description = "Default authorization service URL for forward auth (e.g., http://authelia:9091). If set, all requests will be validated against this service before being proxied.";
+        type = with types; nullOr str;
+        default = null;
+      };
+
+      authPath = mkOption {
+        description = "Default authorization service endpoint path";
+        type = types.str;
+        default = "/api/authz/forward-auth";
+      };
+
+      authTimeout = mkOption {
+        description = "Default timeout for authorization requests";
+        type = with types; nullOr str;
+        default = "5s";
+      };
+
+      authCopyHeaders = mkOption {
+        description = "Default headers to copy from auth response to upstream request";
+        type = types.attrsOf types.str;
+        default = {};
+        example = {
+          "Remote-User" = "";
+          "Remote-Groups" = "";
+          "Remote-Name" = "";
+          "Remote-Email" = "";
+        };
+      };
+
+      authInsecureHTTPS = mkOption {
+        description = "Default setting for disabling TLS certificate validation for auth service";
         type = types.bool;
         default = false;
       };
