@@ -2,7 +2,9 @@ package tsnsrv
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -33,6 +35,15 @@ var (
 	proxyErrors = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "tsnsrv_proxy_errors",
 		Help: "Number of errors encountered proxying requests",
+	})
+	authRequests = promauto.NewCounterVec(prometheus.CounterOpts{
+		Name: "tsnsrv_auth_requests_total",
+		Help: "Total number of authorization requests",
+	}, []string{"status"})
+	authDurations = promauto.NewSummary(prometheus.SummaryOpts{
+		Name:       "tsnsrv_auth_duration_ns",
+		Help:       "Duration of authorization requests",
+		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
 	})
 )
 
@@ -184,6 +195,119 @@ func (s *ValidTailnetSrv) setWhoisHeaders(r *httputil.ProxyRequest) *apitype.Who
 	return who
 }
 
+// authMiddleware handles forward authentication by making a request to the auth service
+func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
+	if s.AuthURL == "" {
+		return next
+	}
+
+	authURL, err := url.Parse(s.AuthURL)
+	if err != nil {
+		slog.Error("invalid auth URL", "url", s.AuthURL, "error", err)
+		return next
+	}
+
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+	if s.AuthInsecureHTTPS {
+		transport.TLSClientConfig.InsecureSkipVerify = true
+	}
+
+	client := &http.Client{
+		Transport: transport,
+		Timeout:   s.AuthTimeout,
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		// Create auth request
+		authReq := &http.Request{
+			Method: "GET",
+			URL: &url.URL{
+				Scheme:   authURL.Scheme,
+				Host:     authURL.Host,
+				Path:     s.AuthPath,
+				RawQuery: r.URL.RawQuery,
+			},
+			Header: make(http.Header),
+		}
+
+		// Copy relevant headers from original request
+		for name, values := range r.Header {
+			if name == "Authorization" || strings.HasPrefix(name, "X-") || name == "Cookie" || name == "User-Agent" {
+				authReq.Header[name] = values
+			}
+		}
+
+		// Set additional headers for auth service
+		authReq.Header.Set("X-Original-Method", r.Method)
+		authReq.Header.Set("X-Original-URL", r.URL.String())
+		if r.Host != "" {
+			authReq.Header.Set("X-Forwarded-Host", r.Host)
+		}
+		if r.TLS != nil {
+			authReq.Header.Set("X-Forwarded-Proto", "https")
+		} else {
+			authReq.Header.Set("X-Forwarded-Proto", "http")
+		}
+
+		// Make auth request
+		authResp, err := client.Do(authReq)
+		if err != nil {
+			elapsed := time.Since(start)
+			authDurations.Observe(float64(elapsed))
+			authRequests.With(prometheus.Labels{"status": "error"}).Inc()
+			slog.Warn("auth request failed", "error", err, "url", authReq.URL)
+			http.Error(w, "Authorization service unavailable", http.StatusBadGateway)
+			return
+		}
+		defer authResp.Body.Close()
+
+		elapsed := time.Since(start)
+		authDurations.Observe(float64(elapsed))
+		statusClass := fmt.Sprintf("%dxx", authResp.StatusCode/100)
+		authRequests.With(prometheus.Labels{"status": statusClass}).Inc()
+
+		// If auth service returns 2xx, continue with the request
+		if authResp.StatusCode >= 200 && authResp.StatusCode < 300 {
+			// Copy configured headers from auth response to original request
+			for headerName := range s.AuthCopyHeaders {
+				if value := authResp.Header.Get(headerName); value != "" {
+					r.Header.Set(headerName, value)
+				}
+			}
+
+			slog.Debug("authorization granted",
+				"status", authResp.StatusCode,
+				"duration", elapsed,
+				"url", r.URL,
+			)
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		// For non-2xx responses, return the auth service response to client
+		slog.Info("authorization denied",
+			"status", authResp.StatusCode,
+			"duration", elapsed,
+			"url", r.URL,
+		)
+
+		// Copy headers from auth response
+		for name, values := range authResp.Header {
+			w.Header()[name] = values
+		}
+		w.WriteHeader(authResp.StatusCode)
+
+		// Copy body from auth response
+		io.Copy(w, authResp.Body)
+	})
+}
+
 // matchPrefixes acts like the http.StripPrefix middleware, except
 // that it checks against several allowed prefixes (an empty list
 // means that all prefixes are allowed); if no prefixes match, it
@@ -223,9 +347,9 @@ func (s *ValidTailnetSrv) mux(transport http.RoundTripper, forFunnel bool) http.
 		ErrorHandler:   s.errorHandler,
 		Transport:      transport,
 	}
+	handler := matchPrefixes(s.AllowedPrefixes, s.StripPrefix, forFunnel, proxy)
+	authHandler := s.authMiddleware(handler)
 	mux := http.NewServeMux()
-
-	mux.Handle("/", matchPrefixes(s.AllowedPrefixes, s.StripPrefix, forFunnel, proxy))
-
+	mux.Handle("/", authHandler)
 	return mux
 }

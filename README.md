@@ -69,6 +69,45 @@ The `-stripPrefix` flag tells tsnsrv to leave the prefix intact: By default, it 
 which would be identical to
 `tsnsrv -name hydra-webhook -funnel -prefix /api/push-github -stripPrefix=false http://127.0.0.1:3001`
 
+### Authorization with external services
+
+`tsnsrv` supports forward authentication integration with external authorization services like [Authelia](https://www.authelia.com/), [Authentik](https://goauthentik.io/), or custom auth services. This works similarly to Caddy's `forward_auth` directive.
+
+To enable authorization:
+
+```sh
+tsnsrv -name protected-app -authURL http://authelia:9091 -authCopyHeader "Remote-User: " -authCopyHeader "Remote-Groups: " http://127.0.0.1:8000
+```
+
+#### Configuration flags:
+
+* `-authURL` - URL of the authorization service (e.g., `http://authelia:9091`)
+* `-authPath` - Authorization endpoint path (default: `/api/authz/forward-auth`)
+* `-authTimeout` - Timeout for authorization requests (default: `5s`)
+* `-authCopyHeader` - Headers to copy from auth response to upstream request
+* `-authInsecureHTTPS` - Disable TLS certificate validation for auth service
+
+#### How it works:
+
+1. For each incoming request, `tsnsrv` makes a GET request to the auth service
+2. The auth service receives headers like `X-Original-Method`, `X-Original-URL`, `X-Forwarded-Host`, etc.
+3. If the auth service returns a 2xx status code, the request proceeds and configured headers are copied
+4. If the auth service returns any other status code, that response is returned to the client (typically a redirect to login)
+
+#### Example with Authelia:
+
+```sh
+# Run tsnsrv with Authelia forward auth
+tsnsrv -name my-app \
+  -authURL https://auth.example.com \
+  -authPath /api/authz/forward-auth \
+  -authCopyHeader "Remote-User: " \
+  -authCopyHeader "Remote-Groups: " \
+  -authCopyHeader "Remote-Name: " \
+  -authCopyHeader "Remote-Email: " \
+  http://localhost:8080
+```
+
 ### Passing requestor information to upstream services
 
 Unless given the `-suppressWhois` flag, `tsnsrv` will look up

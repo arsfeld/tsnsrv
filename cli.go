@@ -167,6 +167,11 @@ type TailnetSrv struct {
 	ReadHeaderTimeout                 time.Duration
 	TsnetVerbose                      bool
 	UpstreamAllowInsecureCiphers      bool
+	AuthURL                           string
+	AuthPath                          string
+	AuthTimeout                       time.Duration
+	AuthCopyHeaders                   headers
+	AuthInsecureHTTPS                 bool
 }
 
 // ValidTailnetSrv is a TailnetSrv that has been constructed from validated CLI arguments.
@@ -208,6 +213,11 @@ func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error)
 	fs.DurationVar(&s.ReadHeaderTimeout, "readHeaderTimeout", 0, "Amount of time to allow for reading HTTP request headers. 0 will disable the timeout but expose the service to the slowloris attack.")
 	fs.BoolVar(&s.TsnetVerbose, "tsnetVerbose", false, "Whether to output tsnet logs.")
 	fs.BoolVar(&s.UpstreamAllowInsecureCiphers, "upstreamAllowInsecureCiphers", false, "Don't require Perfect Forward Secrecy from the upstream https server.")
+	fs.StringVar(&s.AuthURL, "authURL", "", "Authorization service URL for forward auth (e.g., http://authelia:9091)")
+	fs.StringVar(&s.AuthPath, "authPath", "/api/authz/forward-auth", "Authorization service endpoint path")
+	fs.DurationVar(&s.AuthTimeout, "authTimeout", 5*time.Second, "Timeout for authorization requests")
+	fs.Var(&s.AuthCopyHeaders, "authCopyHeader", "Headers to copy from auth response (separated by ': ')")
+	fs.BoolVar(&s.AuthInsecureHTTPS, "authInsecureHTTPS", false, "Disable TLS certificate validation for auth service")
 
 	root := &ffcli.Command{
 		ShortUsage: fmt.Sprintf("%s -name <serviceName> [flags] <toURL>", path.Base(args[0])),
