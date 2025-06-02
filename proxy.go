@@ -237,10 +237,11 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 				defer cancel()
 			}
 			who, err := s.client.WhoIs(ctx, r.RemoteAddr)
-			if err == nil && who.UserProfile.ID != 0 {
+			if err == nil && who.UserProfile.ID != 0 && who.UserProfile.LoginName != "tagged-devices" {
 				// Request is from authenticated Tailscale user, bypass auth
 				slog.Info("auth bypassed",
 					"user", who.UserProfile.LoginName,
+					"remote_addr", r.RemoteAddr,
 					"url", r.URL,
 					"reason", "tailscale_user",
 				)
