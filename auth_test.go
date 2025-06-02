@@ -52,8 +52,8 @@ func TestAuthMiddlewareWithAuthService(t *testing.T) {
 	// Create a mock auth service
 	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Verify the auth request has correct headers
-		if r.Header.Get("X-Original-Method") != "GET" {
-			t.Error("Expected X-Original-Method header")
+		if r.Header.Get("X-Forwarded-Method") != "GET" {
+			t.Error("Expected X-Forwarded-Method header")
 		}
 		if r.Header.Get("X-Forwarded-Proto") == "" {
 			t.Error("Expected X-Forwarded-Proto header")

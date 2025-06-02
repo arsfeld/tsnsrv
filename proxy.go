@@ -272,8 +272,8 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 		}
 
 		// Set additional headers for auth service
-		authReq.Header.Set("X-Original-Method", r.Method)
-		authReq.Header.Set("X-Original-URL", r.URL.String())
+		authReq.Header.Set("X-Forwarded-Method", r.Method)
+		authReq.Header.Set("X-Forwarded-Uri", r.URL.String())
 		if r.Host != "" {
 			authReq.Header.Set("X-Forwarded-Host", r.Host)
 		}
@@ -314,6 +314,7 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 			slog.Info("auth granted",
 				"status", authResp.StatusCode,
 				"duration", elapsed,
+				"remote_addr", r.RemoteAddr,
 				"url", r.URL,
 				"copied_headers", copiedHeaders,
 			)
@@ -324,6 +325,7 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 		// For non-2xx responses, return the auth service response to client
 		slog.Info("auth denied",
 			"status", authResp.StatusCode,
+			"remote_addr", r.RemoteAddr,
 			"duration", elapsed,
 			"url", r.URL,
 		)
