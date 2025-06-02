@@ -86,6 +86,7 @@ tsnsrv -name protected-app -authURL http://authelia:9091 -authCopyHeader "Remote
 * `-authTimeout` - Timeout for authorization requests (default: `5s`)
 * `-authCopyHeader` - Headers to copy from auth response to upstream request
 * `-authInsecureHTTPS` - Disable TLS certificate validation for auth service
+* `-authBypassForTailnet` - Bypass forward auth for requests from authenticated Tailscale users
 
 #### How it works:
 
@@ -93,6 +94,22 @@ tsnsrv -name protected-app -authURL http://authelia:9091 -authCopyHeader "Remote
 2. The auth service receives headers like `X-Original-Method`, `X-Original-URL`, `X-Forwarded-Host`, etc.
 3. If the auth service returns a 2xx status code, the request proceeds and configured headers are copied
 4. If the auth service returns any other status code, that response is returned to the client (typically a redirect to login)
+
+#### Bypassing auth for Tailscale users:
+
+When `-authBypassForTailnet` is enabled, requests from authenticated Tailscale users will skip the external auth service entirely. This is useful when you want to:
+- Use external auth for public/funnel access
+- Allow direct access for users already authenticated via Tailscale
+- Reduce latency for internal users by skipping the auth round-trip
+
+Example:
+```sh
+# Public users go through Authelia, Tailscale users bypass it
+tsnsrv -name my-app -funnel \
+  -authURL http://authelia:9091 \
+  -authBypassForTailnet \
+  http://localhost:8080
+```
 
 #### Example with Authelia:
 

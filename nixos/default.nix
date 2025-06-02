@@ -256,6 +256,13 @@
         defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authInsecureHTTPS";
       };
 
+      authBypassForTailnet = mkOption {
+        description = "Bypass forward auth for requests from Tailscale network (authenticated users)";
+        type = types.bool;
+        default = defaults.authBypassForTailnet;
+        defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authBypassForTailnet";
+      };
+
       extraArgs = mkOption {
         description = "Extra arguments to pass to this tsnsrv process.";
         type = types.listOf types.str;
@@ -289,6 +296,7 @@
       "-tsnetVerbose=${lib.boolToString service.tsnetVerbose}"
       "-upstreamAllowInsecureCiphers=${lib.boolToString service.upstreamAllowInsecureCiphers}"
       "-authInsecureHTTPS=${lib.boolToString service.authInsecureHTTPS}"
+      "-authBypassForTailnet=${lib.boolToString service.authBypassForTailnet}"
       "-authPath=${service.authPath}"
     ]
     ++ lib.optionals (service.authURL != null) ["-authURL=${service.authURL}"]
@@ -425,6 +433,12 @@ in {
 
       authInsecureHTTPS = mkOption {
         description = "Default setting for disabling TLS certificate validation for auth service";
+        type = types.bool;
+        default = false;
+      };
+
+      authBypassForTailnet = mkOption {
+        description = "Default setting for bypassing forward auth for requests from Tailscale network (authenticated users)";
         type = types.bool;
         default = false;
       };

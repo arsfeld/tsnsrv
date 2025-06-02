@@ -172,6 +172,7 @@ type TailnetSrv struct {
 	AuthTimeout                       time.Duration
 	AuthCopyHeaders                   headers
 	AuthInsecureHTTPS                 bool
+	AuthBypassForTailnet              bool
 }
 
 // ValidTailnetSrv is a TailnetSrv that has been constructed from validated CLI arguments.
@@ -180,7 +181,7 @@ type TailnetSrv struct {
 type ValidTailnetSrv struct {
 	TailnetSrv
 	DestURL *url.URL
-	client  *local.Client
+	client  WhoIsClient
 }
 
 // TailnetSrvFromArgs constructs a validated tailnet service from commandline arguments.
@@ -218,6 +219,7 @@ func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error)
 	fs.DurationVar(&s.AuthTimeout, "authTimeout", 5*time.Second, "Timeout for authorization requests")
 	fs.Var(&s.AuthCopyHeaders, "authCopyHeader", "Headers to copy from auth response (separated by ': ')")
 	fs.BoolVar(&s.AuthInsecureHTTPS, "authInsecureHTTPS", false, "Disable TLS certificate validation for auth service")
+	fs.BoolVar(&s.AuthBypassForTailnet, "authBypassForTailnet", false, "Bypass forward auth for requests from Tailscale network (authenticated users)")
 
 	root := &ffcli.Command{
 		ShortUsage: fmt.Sprintf("%s -name <serviceName> [flags] <toURL>", path.Base(args[0])),
