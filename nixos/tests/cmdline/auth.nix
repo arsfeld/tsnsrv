@@ -22,6 +22,7 @@ in
           "Remote-Email" = "";
         };
         authInsecureHTTPS = false;
+        authBypassForTailnet = true;
       };
       systemd.services.tsnsrv-auth-test.enableStrictShellChecks = true;
     };

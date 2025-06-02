@@ -18,6 +18,11 @@ import (
 	"tailscale.com/client/tailscale/apitype"
 )
 
+// WhoIsClient is an interface for the WhoIs functionality to allow testing
+type WhoIsClient interface {
+	WhoIs(ctx context.Context, addr string) (*apitype.WhoIsResponse, error)
+}
+
 type contextKey struct{}
 
 var proxyContextKey = contextKey{}
@@ -222,6 +227,26 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Check if we should bypass auth for Tailscale users
+		if s.AuthBypassForTailnet && !s.SuppressWhois && s.client != nil {
+			ctx := r.Context()
+			if s.WhoisTimeout > 0 {
+				var cancel func()
+				ctx, cancel = context.WithTimeout(ctx, s.WhoisTimeout)
+				defer cancel()
+			}
+			who, err := s.client.WhoIs(ctx, r.RemoteAddr)
+			if err == nil && who.UserProfile.ID != 0 {
+				// Request is from authenticated Tailscale user, bypass auth
+				slog.Debug("bypassing auth for Tailscale user",
+					"user", who.UserProfile.LoginName,
+					"url", r.URL,
+				)
+				next.ServeHTTP(w, r)
+				return
+			}
+		}
+
 		start := time.Now()
 
 		// Create auth request
