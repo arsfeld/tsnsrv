@@ -72,6 +72,7 @@ func (c *proxyContext) observeResponse(res *http.Response) {
 		login = c.who.UserProfile.LoginName
 		node = c.who.Node.Name
 	}
+
 	slog.Info("served",
 		"original", c.originalURL,
 		"rewritten", c.rewrittenURL,
@@ -238,9 +239,10 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 			who, err := s.client.WhoIs(ctx, r.RemoteAddr)
 			if err == nil && who.UserProfile.ID != 0 {
 				// Request is from authenticated Tailscale user, bypass auth
-				slog.Debug("bypassing auth for Tailscale user",
+				slog.Info("auth bypassed",
 					"user", who.UserProfile.LoginName,
 					"url", r.URL,
+					"reason", "tailscale_user",
 				)
 				next.ServeHTTP(w, r)
 				return
@@ -300,23 +302,26 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 		// If auth service returns 2xx, continue with the request
 		if authResp.StatusCode >= 200 && authResp.StatusCode < 300 {
 			// Copy configured headers from auth response to original request
+			var copiedHeaders []string
 			for headerName := range s.AuthCopyHeaders {
 				if value := authResp.Header.Get(headerName); value != "" {
 					r.Header.Set(headerName, value)
+					copiedHeaders = append(copiedHeaders, headerName)
 				}
 			}
 
-			slog.Debug("authorization granted",
+			slog.Info("auth granted",
 				"status", authResp.StatusCode,
 				"duration", elapsed,
 				"url", r.URL,
+				"copied_headers", copiedHeaders,
 			)
 			next.ServeHTTP(w, r)
 			return
 		}
 
 		// For non-2xx responses, return the auth service response to client
-		slog.Info("authorization denied",
+		slog.Info("auth denied",
 			"status", authResp.StatusCode,
 			"duration", elapsed,
 			"url", r.URL,
