@@ -24,13 +24,20 @@
         ...
       }: let
         tsnsrvPkg = p: subPackage:
-          p.buildGo123Module {
+          p.buildGo124Module {
             pname = builtins.baseNameOf subPackage;
             version = "0.0.0";
             vendorHash = builtins.readFile ./tsnsrv.sri;
-            src = lib.sourceFilesBySuffices (lib.sources.cleanSource ./.) [".go" ".mod" ".sum"];
+            src = lib.sourceFilesBySuffices (lib.sources.cleanSource ./.) [
+              ".go"
+              ".mod"
+              ".sum"
+            ];
             subPackages = [subPackage];
-            ldflags = ["-s" "-w"];
+            ldflags = [
+              "-s"
+              "-w"
+            ];
             meta.mainProgram = builtins.baseNameOf subPackage;
           };
         imageArgs = p: {
@@ -40,7 +47,10 @@
             (p.buildEnv {
               name = "image-root";
               paths = [(tsnsrvPkg p "cmd/tsnsrv")];
-              pathsToLink = ["/bin" "/tmp"];
+              pathsToLink = [
+                "/bin"
+                "/tmp"
+              ];
             })
             p.dockerTools.caCertificates
           ];
@@ -60,7 +70,9 @@
           tsnsrvOciImage = pkgs.dockerTools.buildLayeredImage (imageArgs pkgs);
 
           # "cross-platform" build, mainly to support building on github actions (but also on macOS with apple silicon):
-          tsnsrvOciImage-cross-aarch64-linux = pkgs.pkgsCross.aarch64-multiplatform.dockerTools.buildLayeredImage (imageArgs pkgs.pkgsCross.aarch64-multiplatform);
+          tsnsrvOciImage-cross-aarch64-linux = pkgs.pkgsCross.aarch64-multiplatform.dockerTools.buildLayeredImage (
+            imageArgs pkgs.pkgsCross.aarch64-multiplatform
+          );
         };
 
         formatter = pkgs.alejandra;

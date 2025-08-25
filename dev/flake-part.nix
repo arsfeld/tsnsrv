@@ -7,7 +7,10 @@
     inputs.devshell.flakeModule
     inputs.generate-go-sri.flakeModules.default
   ];
-  systems = ["x86_64-linux" "aarch64-darwin"];
+  systems = [
+    "x86_64-linux"
+    "aarch64-darwin"
+  ];
 
   perSystem = {
     config,
@@ -28,7 +31,7 @@
         }
       ];
       packages = [
-        pkgs.go_1_23
+        pkgs.go_1_24
         pkgs.gopls
         pkgs.golangci-lint
       ];
@@ -39,33 +42,35 @@
       tsnsrv.program = config.packages.tsnsrv;
 
       pushImagesToGhcr = {
-        program = inputs.flocken.legacyPackages.${system}.mkDockerManifest (let
-          ref = builtins.getEnv "GITHUB_REF_NAME";
-          isPR = pkgs.lib.hasSuffix "/merge" ref;
-          branch =
-            if isPR
-            then "pr-${pkgs.lib.removeSuffix "/merge" ref}"
-            else ref;
-        in {
-          autoTags = {
-            branch = true;
-            version = true;
-          };
-          inherit branch;
+        program = inputs.flocken.legacyPackages.${system}.mkDockerManifest (
+          let
+            ref = builtins.getEnv "GITHUB_REF_NAME";
+            isPR = pkgs.lib.hasSuffix "/merge" ref;
+            branch =
+              if isPR
+              then "pr-${pkgs.lib.removeSuffix "/merge" ref}"
+              else ref;
+          in {
+            autoTags = {
+              branch = true;
+              version = true;
+            };
+            inherit branch;
 
-          github = {
-            enable = true;
-            token = "$GH_TOKEN";
-          };
+            github = {
+              enable = true;
+              token = "$GH_TOKEN";
+            };
 
-          # Here we build the x86_64-linux variants only because
-          # that is what runs on GHA, whence we push the images to
-          # ghcr.
-          images = with self.packages; [
-            x86_64-linux.tsnsrvOciImage
-            x86_64-linux.tsnsrvOciImage-cross-aarch64-linux
-          ];
-        });
+            # Here we build the x86_64-linux variants only because
+            # that is what runs on GHA, whence we push the images to
+            # ghcr.
+            images = with self.packages; [
+              x86_64-linux.tsnsrvOciImage
+              x86_64-linux.tsnsrvOciImage-cross-aarch64-linux
+            ];
+          }
+        );
         type = "app";
       };
     };
