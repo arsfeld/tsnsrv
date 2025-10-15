@@ -1,0 +1,181 @@
+services:
+  - name: "test-service-1"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-1"
+    prometheusAddr: ":9099"
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-2"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-2"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-3"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-3"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-4"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-4"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-5"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-5"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-6"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-6"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-7"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-7"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-8"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-8"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-9"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-9"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-10"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-10"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-11"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-11"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-12"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-12"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-13"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-13"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-14"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-14"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-15"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-15"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-16"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-16"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-17"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-17"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-18"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-18"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-19"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-19"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s
+  - name: "test-service-20"
+    upstream: "http://localhost:8080"
+    ephemeral: true
+    funnel: false
+    listenAddr: ":443"
+    stateDir: "/tmp/tsnsrv-profile/service-20"
+    prometheusAddr: ""
+    suppressWhois: true
+    timeout: 30s

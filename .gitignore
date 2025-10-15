@@ -2,3 +2,6 @@
 .direnv/
 CLAUDE.md
 backlog/
+/tsnsrv
+/profiling/results/
+/profiling/analysis/
