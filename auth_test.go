@@ -293,3 +293,108 @@ func TestAuthMiddlewareBypassNoTailscaleUser(t *testing.T) {
 		t.Error("Expected auth service to be called when request is not from Tailscale network")
 	}
 }
+
+func TestAuthMiddlewareTimeout(t *testing.T) {
+	// Create a mock auth service that times out
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Simulate a slow auth service
+		time.Sleep(2 * time.Second)
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer authServer.Close()
+
+	// Configure auth middleware with a very short timeout
+	srv := &ValidTailnetSrv{
+		TailnetSrv: TailnetSrv{
+			AuthURL:     authServer.URL,
+			AuthPath:    "/api/authz/forward-auth",
+			AuthTimeout: 10 * time.Millisecond, // Very short timeout
+		},
+	}
+
+	// Create a test handler (should not be called on timeout)
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Test handler should not be called when auth times out")
+	})
+
+	middleware := srv.authMiddleware(testHandler)
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+
+	middleware.ServeHTTP(w, req)
+
+	// Should return 502 Bad Gateway when auth service is unavailable
+	if w.Code != http.StatusBadGateway {
+		t.Errorf("Expected status Bad Gateway on timeout, got %d", w.Code)
+	}
+}
+
+func TestAuthMiddlewareConnectionFailure(t *testing.T) {
+	// Configure auth middleware with an unreachable host
+	srv := &ValidTailnetSrv{
+		TailnetSrv: TailnetSrv{
+			AuthURL:     "http://192.0.2.1:9999", // TEST-NET-1, guaranteed to not respond
+			AuthPath:    "/api/authz/forward-auth",
+			AuthTimeout: 100 * time.Millisecond,
+		},
+	}
+
+	// Create a test handler (should not be called on connection failure)
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Test handler should not be called when auth service is unreachable")
+	})
+
+	middleware := srv.authMiddleware(testHandler)
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+
+	middleware.ServeHTTP(w, req)
+
+	// Should return 502 Bad Gateway when auth service is unavailable
+	if w.Code != http.StatusBadGateway {
+		t.Errorf("Expected status Bad Gateway on connection failure, got %d", w.Code)
+	}
+}
+
+func TestAuthMiddleware3xxResponse(t *testing.T) {
+	// Create a mock auth service that returns a 3xx (non-2xx) response
+	// The HTTP client will try to follow redirects automatically, but if
+	// the redirect fails or isn't followed for any reason, we should pass
+	// through the response to the client
+	authServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Return 307 with a body - auth service might use this to indicate
+		// the request needs to go through additional authentication
+		w.Header().Set("WWW-Authenticate", "Bearer realm=\"example\"")
+		w.WriteHeader(http.StatusTemporaryRedirect)
+		w.Write([]byte("Additional authentication required"))
+	}))
+	defer authServer.Close()
+
+	// Configure auth middleware
+	srv := &ValidTailnetSrv{
+		TailnetSrv: TailnetSrv{
+			AuthURL:     authServer.URL,
+			AuthPath:    "/api/authz/forward-auth",
+			AuthTimeout: 5 * time.Second,
+		},
+	}
+
+	// Create a test handler (should not be called on non-2xx response)
+	testHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		t.Error("Test handler should not be called when auth returns non-2xx")
+	})
+
+	middleware := srv.authMiddleware(testHandler)
+	req := httptest.NewRequest("GET", "/test", nil)
+	w := httptest.NewRecorder()
+
+	middleware.ServeHTTP(w, req)
+
+	// Should pass through the non-2xx response
+	if w.Code != http.StatusTemporaryRedirect {
+		t.Errorf("Expected status Temporary Redirect, got %d", w.Code)
+	}
+	if w.Header().Get("WWW-Authenticate") == "" {
+		t.Error("Expected WWW-Authenticate header to be passed through from auth response")
+	}
+}
