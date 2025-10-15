@@ -123,9 +123,21 @@ in
 
           # Session configuration
           session = {
-            domain = "example.com";
+            cookies = [
+              {
+                domain = "example.com";
+                authelia_url = "https://auth.example.com";
+              }
+            ];
             expiration = "1h";
             inactivity = "5m";
+          };
+
+          # Notifier configuration (required)
+          notifier = {
+            filesystem = {
+              filename = "/var/lib/authelia-main/notification.txt";
+            };
           };
         };
       };
@@ -166,16 +178,9 @@ in
         };
       };
 
-      systemd.services.tsnsrv-authenticated = {
+      systemd.services.tsnsrv-all = {
         enableStrictShellChecks = true;
-        unitConfig.ConditionPathExists = config.services.tsnsrv.services.authenticated.authKeyPath;
-        after = ["authelia-main.service"];
-        wants = ["authelia-main.service"];
-      };
-
-      systemd.services.tsnsrv-with-bypass = {
-        enableStrictShellChecks = true;
-        unitConfig.ConditionPathExists = config.services.tsnsrv.services.with-bypass.authKeyPath;
+        unitConfig.ConditionPathExists = config.services.tsnsrv.defaults.authKeyPath;
         after = ["authelia-main.service"];
         wants = ["authelia-main.service"];
       };
@@ -201,64 +206,48 @@ in
 
       # Verify Authelia is responding
       machine.wait_until_succeeds("curl -f http://127.0.0.1:9091/api/health", timeout=30)
-      print("Authelia is healthy")
+      print("✓ Authelia is healthy")
 
       def wait_for_tsnsrv_registered(name):
           """Poll until tsnsrv appears in the list of hosts, then return its IP."""
-          while True:
+          for _ in range(60):
               output = json.loads(machine.succeed("headscale nodes list -o json-line"))
               entry = [elt["ip_addresses"][0] for elt in output if elt["given_name"] == name]
               if len(entry) == 1:
                   return entry[0]
               time.sleep(1)
+          raise Exception(f"Service {name} did not register within timeout")
 
-      def test_authenticated_service():
-          """Test tsnsrv with authentication enabled, without bypass"""
-          service_name = "authenticated"
+      # Start the single multi-service tsnsrv instance
+      machine.systemctl("start tsnsrv-all")
+      machine.wait_for_unit("tsnsrv-all", timeout=30)
+      print("✓ tsnsrv-all service started")
 
-          machine.systemctl(f"start tsnsrv-{service_name}")
-          machine.wait_for_unit(f"tsnsrv-{service_name}", timeout=30)
+      # Wait for both services to register
+      authenticated_ip = wait_for_tsnsrv_registered("authenticated")
+      print(f"✓ authenticated service registered with IP {authenticated_ip}")
 
-          tsnsrv_ip = wait_for_tsnsrv_registered(service_name)
-          print(f"tsnsrv-{service_name} is up with IP {tsnsrv_ip}")
+      bypass_ip = wait_for_tsnsrv_registered("with-bypass")
+      print(f"✓ with-bypass service registered with IP {bypass_ip}")
 
-          machine.wait_until_succeeds(f"tailscale ping {tsnsrv_ip}", timeout=30)
+      # Test connectivity
+      machine.wait_until_succeeds(f"tailscale ping {authenticated_ip}", timeout=30)
+      print("✓ authenticated service is pingable")
 
-          # Test 1: Unauthenticated request should be denied
-          print("Testing unauthenticated request (should be denied)...")
-          result = machine.fail(f"curl -f http://{tsnsrv_ip}/")
-          print(f"Unauthenticated request correctly denied")
+      machine.wait_until_succeeds(f"tailscale ping {bypass_ip}", timeout=30)
+      print("✓ with-bypass service is pingable")
 
-          # Test 2: Request with valid auth should succeed
-          # Note: In a real scenario, we'd need to go through Authelia's login flow
-          # For this test, we're verifying that the auth middleware is called
-          # and properly denies unauthenticated requests
-          print("✓ Authentication middleware is working correctly")
+      # Test 1: Authenticated service - unauthenticated request should be denied
+      print("Testing authenticated service without credentials (should be denied)...")
+      machine.fail(f"curl -f http://{authenticated_ip}/")
+      print("✓ Unauthenticated request correctly denied")
 
-      def test_bypass_service():
-          """Test tsnsrv with auth bypass enabled for Tailscale users"""
-          service_name = "with-bypass"
+      # Test 2: Bypass service - request from Tailscale network should bypass auth
+      print("Testing with-bypass service from Tailscale network (should bypass auth)...")
+      output = machine.succeed(f"curl -f http://{bypass_ip}/")
+      assert "Authenticated content!" in output, f"Expected content not found. Got: {output}"
+      print("✓ Auth bypass for Tailscale users is working correctly")
 
-          machine.systemctl(f"start tsnsrv-{service_name}")
-          machine.wait_for_unit(f"tsnsrv-{service_name}", timeout=30)
-
-          tsnsrv_ip = wait_for_tsnsrv_registered(service_name)
-          print(f"tsnsrv-{service_name} is up with IP {tsnsrv_ip}")
-
-          machine.wait_until_succeeds(f"tailscale ping {tsnsrv_ip}", timeout=30)
-
-          # Test: Request from Tailscale network should bypass auth
-          print("Testing request from Tailscale network (should bypass auth)...")
-          output = machine.succeed(f"curl -f http://{tsnsrv_ip}/")
-          if "Authenticated content!" in output:
-              print("✓ Auth bypass for Tailscale users is working correctly")
-          else:
-              raise Exception(f"Expected content not found. Got: {output}")
-
-      # Run tests
-      test_authenticated_service()
-      test_bypass_service()
-
-      print("All Authelia integration tests passed!")
+      print("\n✅ All Authelia integration tests passed!")
     '';
   }
