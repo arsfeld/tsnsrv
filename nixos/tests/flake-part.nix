@@ -34,6 +34,7 @@
         lib.mkMerge [
           (importTests "cmdline")
           (importTests "e2e")
+          (importTests "profiling")
         ];
   };
 }

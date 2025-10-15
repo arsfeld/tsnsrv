@@ -535,6 +535,12 @@ in {
         default = false;
       };
 
+      prometheusAddr = mkOption {
+        description = "Address to expose Prometheus metrics and pprof endpoints on. Set to null to disable.";
+        type = with types; nullOr str;
+        default = ":9099";
+      };
+
       urlParts = mkOption {
         description = "Default URL parts for tsnsrv services. Each service will have the parts here interpolated onto its .toURL option by default.";
         type = types.submodule urlPartsSubmodule;
@@ -642,6 +648,7 @@ in {
             services = config.services.tsnsrv.services;
             stateBaseDir = "/var/lib/tsnsrv-all";
             authKeyPath = "/run/credentials/tsnsrv-all.service/authKey";
+            prometheusAddr = config.services.tsnsrv.defaults.prometheusAddr;
           };
           # Use first service for loginServerUrl, or null
           firstService = lib.head (lib.attrValues config.services.tsnsrv.services);
