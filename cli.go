@@ -141,6 +141,256 @@ func (t *tags) Set(value string) error {
 	return nil
 }
 
+type serviceFlags []ServiceConfig
+
+func (s *serviceFlags) String() string {
+	if len(*s) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, svc := range *s {
+		parts = append(parts, fmt.Sprintf("%s->%s", svc.Name, svc.Upstream))
+	}
+	return strings.Join(parts, "; ")
+}
+
+var errServiceFlagFormat = errors.New("service flag format must be key=value pairs separated by commas")
+
+func (s *serviceFlags) Set(value string) error {
+	svc := ServiceConfig{
+		// Set defaults
+		ListenAddr:              ":443",
+		RecommendedProxyHeaders: true,
+		StripPrefix:             true,
+		PrometheusAddr:          ":9099",
+		AuthPath:                "/api/authz/forward-auth",
+		AuthTimeout:             5 * time.Second,
+		WhoisTimeout:            1 * time.Second,
+		Timeout:                 1 * time.Minute,
+	}
+
+	// Parse key=value pairs separated by commas
+	pairs := strings.Split(value, ",")
+	for _, pair := range pairs {
+		key, val, ok := strings.Cut(strings.TrimSpace(pair), "=")
+		if !ok {
+			return fmt.Errorf("%w: invalid pair %q", errServiceFlagFormat, pair)
+		}
+		key = strings.TrimSpace(key)
+		val = strings.TrimSpace(val)
+
+		if err := s.setServiceField(&svc, key, val); err != nil {
+			return fmt.Errorf("setting %s: %w", key, err)
+		}
+	}
+
+	// Validate required fields
+	if svc.Name == "" {
+		return fmt.Errorf("service definition: %w", errNameRequired)
+	}
+	if svc.Upstream == "" {
+		return errors.New("service definition: upstream is required")
+	}
+
+	*s = append(*s, svc)
+	return nil
+}
+
+func (s *serviceFlags) setServiceField(svc *ServiceConfig, key, value string) error {
+	switch key {
+	// Required fields
+	case "name":
+		svc.Name = value
+	case "upstream":
+		svc.Upstream = value
+
+	// Connection options
+	case "upstreamTCPAddr":
+		svc.UpstreamTCPAddr = value
+	case "upstreamUnixAddr":
+		svc.UpstreamUnixAddr = value
+
+	// Tailscale options
+	case "ephemeral":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.Ephemeral = v
+	case "tag":
+		if !strings.HasPrefix(value, "tag:") {
+			return errTagFormat
+		}
+		svc.Tags = append(svc.Tags, value)
+	case "stateDir":
+		svc.StateDir = value
+	case "authkeyPath":
+		svc.AuthkeyPath = value
+
+	// Network exposure
+	case "funnel":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.Funnel = v
+	case "funnelOnly":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.FunnelOnly = v
+	case "listenAddr":
+		svc.ListenAddr = value
+	case "plaintext":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.ServePlaintext = v
+
+	// TLS options
+	case "certificateFile":
+		svc.CertificateFile = value
+	case "keyFile":
+		svc.KeyFile = value
+
+	// Proxy behavior
+	case "recommendedProxyHeaders":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.RecommendedProxyHeaders = v
+	case "prefix":
+		svc.Prefixes = append(svc.Prefixes, value)
+	case "stripPrefix":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.StripPrefix = v
+	case "upstreamHeader":
+		if svc.UpstreamHeaders == nil {
+			svc.UpstreamHeaders = make(map[string]string)
+		}
+		name, val, ok := strings.Cut(value, ":")
+		if !ok {
+			return fmt.Errorf("header format must be 'Name:Value', got %q", value)
+		}
+		svc.UpstreamHeaders[strings.TrimSpace(name)] = strings.TrimSpace(val)
+
+	// Security options
+	case "insecureHTTPS":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.InsecureHTTPS = v
+	case "upstreamAllowInsecureCiphers":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.UpstreamAllowInsecureCiphers = v
+
+	// WhoIs options
+	case "suppressWhois":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.SuppressWhois = v
+	case "whoisTimeout":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("parsing duration: %w", err)
+		}
+		svc.WhoisTimeout = d
+	case "suppressTailnetDialer":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.SuppressTailnetDialer = v
+
+	// Forward auth options
+	case "authURL":
+		svc.AuthURL = value
+	case "authPath":
+		svc.AuthPath = value
+	case "authTimeout":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("parsing duration: %w", err)
+		}
+		svc.AuthTimeout = d
+	case "authCopyHeader":
+		if svc.AuthCopyHeaders == nil {
+			svc.AuthCopyHeaders = make(map[string]string)
+		}
+		name, val, ok := strings.Cut(value, ":")
+		if !ok {
+			return fmt.Errorf("header format must be 'Name:Value', got %q", value)
+		}
+		svc.AuthCopyHeaders[strings.TrimSpace(name)] = strings.TrimSpace(val)
+	case "authInsecureHTTPS":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.AuthInsecureHTTPS = v
+	case "authBypassForTailnet":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.AuthBypassForTailnet = v
+
+	// Timeouts and performance
+	case "timeout":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("parsing duration: %w", err)
+		}
+		svc.Timeout = d
+	case "readHeaderTimeout":
+		d, err := time.ParseDuration(value)
+		if err != nil {
+			return fmt.Errorf("parsing duration: %w", err)
+		}
+		svc.ReadHeaderTimeout = d
+
+	// Monitoring
+	case "prometheusAddr":
+		svc.PrometheusAddr = value
+
+	// Debugging
+	case "tsnetVerbose":
+		v, err := parseBool(value)
+		if err != nil {
+			return err
+		}
+		svc.TsnetVerbose = v
+
+	default:
+		return fmt.Errorf("unknown service configuration key: %q", key)
+	}
+
+	return nil
+}
+
+func parseBool(s string) (bool, error) {
+	switch strings.ToLower(s) {
+	case "true", "yes", "1", "y":
+		return true, nil
+	case "false", "no", "0", "n":
+		return false, nil
+	default:
+		return false, fmt.Errorf("invalid boolean value: %q", s)
+	}
+}
+
 type TailnetSrv struct {
 	UpstreamTCPAddr, UpstreamUnixAddr string
 	Ephemeral                         bool
@@ -198,13 +448,18 @@ func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error)
 var errConfigAndCLI = errors.New("cannot use -config with other CLI flags; use either config file or CLI mode")
 
 // TailnetSrvsFromArgs constructs validated tailnet services from commandline arguments.
-// Supports both single-service CLI mode and multi-service config file mode via -config flag.
+// Supports three modes:
+// 1. Single-service CLI mode (legacy): -name <name> <url>
+// 2. Multi-service config file mode: -config <file>
+// 3. Multi-service CLI mode: -service "key=val,..." [-service "key=val,..."]
 func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, error) {
 	s := &TailnetSrv{}
 	var configPath string
+	var services serviceFlags
 
 	fs := flag.NewFlagSet("tsnsrv", flag.ExitOnError)
 	fs.StringVar(&configPath, "config", "", "Path to configuration file for multi-service mode")
+	fs.Var(&services, "service", "Service definition as key=value pairs (repeatable for multiple services)")
 	fs.StringVar(&s.UpstreamTCPAddr, "upstreamTCPAddr", "", "Proxy to an HTTP service listening on this TCP address")
 	fs.StringVar(&s.UpstreamUnixAddr, "upstreamUnixAddr", "", "Proxy to an HTTP service listening on this UNIX domain socket address")
 	fs.BoolVar(&s.Ephemeral, "ephemeral", false, "Declare this service ephemeral")
@@ -239,7 +494,7 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 	fs.BoolVar(&s.AuthBypassForTailnet, "authBypassForTailnet", false, "Bypass forward auth for requests from Tailscale network (authenticated users)")
 
 	root := &ffcli.Command{
-		ShortUsage: fmt.Sprintf("%s [-config <file>] OR [-name <serviceName> [flags] <toURL>]", path.Base(args[0])),
+		ShortUsage: fmt.Sprintf("%s [-config <file>] OR [-service \"key=val,...\"] OR [-name <serviceName> [flags] <toURL>]", path.Base(args[0])),
 		FlagSet:    fs,
 		Exec:       func(context.Context, []string) error { return nil },
 	}
@@ -247,31 +502,56 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 		return nil, root, fmt.Errorf("could not parse args: %w", err)
 	}
 
-	// Config file mode
-	if configPath != "" {
-		// Verify no other CLI flags were provided (except tsnetVerbose for debugging)
-		if s.Name != "" || len(root.FlagSet.Args()) > 0 {
-			return nil, root, errConfigAndCLI
-		}
+	// Determine which mode we're in
+	hasConfigFile := configPath != ""
+	hasServiceFlags := len(services) > 0
+	hasLegacyFlags := s.Name != "" || len(root.FlagSet.Args()) > 0
 
+	// Check for invalid mode combinations
+	if hasConfigFile && hasServiceFlags {
+		return nil, root, errors.New("cannot use both -config and -service flags; choose one mode")
+	}
+	if hasConfigFile && hasLegacyFlags {
+		return nil, root, errConfigAndCLI
+	}
+	if hasServiceFlags && hasLegacyFlags {
+		return nil, root, errors.New("cannot mix -service flag with legacy single-service flags; use -service for all services")
+	}
+
+	// Mode 1: Config file mode
+	if hasConfigFile {
 		cfg, err := LoadConfig(configPath)
 		if err != nil {
 			return nil, root, fmt.Errorf("loading config file: %w", err)
 		}
 
-		var services []*ValidTailnetSrv
+		var validServices []*ValidTailnetSrv
 		for i, svcCfg := range cfg.Services {
 			ts := svcCfg.ToTailnetSrv()
 			valid, err := ts.validate([]string{svcCfg.Upstream})
 			if err != nil {
 				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
 			}
-			services = append(services, valid)
+			validServices = append(validServices, valid)
 		}
-		return services, root, nil
+		return validServices, root, nil
 	}
 
-	// CLI mode (original behavior)
+	// Mode 2: Multi-service CLI mode
+	if hasServiceFlags {
+		var validServices []*ValidTailnetSrv
+		for i, svcCfg := range services {
+			ts := svcCfg.ToTailnetSrv()
+			valid, err := ts.validate([]string{svcCfg.Upstream})
+			if err != nil {
+				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
+			}
+			validServices = append(validServices, valid)
+		}
+		return validServices, root, nil
+	}
+
+	// Mode 3: Legacy single-service CLI mode
 	valid, err := s.validate(root.FlagSet.Args())
 	if err != nil {
 		return nil, root, fmt.Errorf("failed to validate args: %w", err)

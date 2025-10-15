@@ -314,6 +314,88 @@
     ++ map (h: "-authCopyHeader=${h}") (lib.mapAttrsToList (name: value: "${name}: ${value}") service.authCopyHeaders)
     ++ service.extraArgs
     ++ [service.toURL];
+
+  # Function to convert a service configuration to YAML format
+  # Takes additional parameters for runtime paths that need to be substituted
+  serviceToYaml = {name, service, stateBaseDir ? null, authKeyPath ? null}: let
+    # Helper to format headers for YAML
+    formatHeaders = headers:
+      lib.mapAttrs (k: v: v) headers;
+  in {
+    inherit name;
+    upstream = service.toURL;
+
+    # Optional fields - only include if set to non-default values
+  } // lib.optionalAttrs (service.upstreamUnixAddr != null) {
+    upstreamUnixAddr = service.upstreamUnixAddr;
+  } // lib.optionalAttrs service.ephemeral {
+    ephemeral = true;
+  } // lib.optionalAttrs (service.tags != []) {
+    tags = service.tags;
+  } // lib.optionalAttrs service.funnel {
+    funnel = true;
+  } // lib.optionalAttrs (service.listenAddr != ":443") {
+    listenAddr = service.listenAddr;
+  } // lib.optionalAttrs service.plaintext {
+    plaintext = true;
+  } // lib.optionalAttrs (service.certificateFile != null && service.certificateKey != null) {
+    certificateFile = service.certificateFile;
+    keyFile = service.certificateKey;
+  } // lib.optionalAttrs (service.prefixes != []) {
+    prefixes = service.prefixes;
+  } // lib.optionalAttrs (!service.stripPrefix) {
+    stripPrefix = false;
+  } // lib.optionalAttrs (service.upstreamHeaders != {}) {
+    upstreamHeaders = formatHeaders service.upstreamHeaders;
+  } // lib.optionalAttrs service.insecureHTTPS {
+    insecureHTTPS = true;
+  } // lib.optionalAttrs service.upstreamAllowInsecureCiphers {
+    upstreamAllowInsecureCiphers = true;
+  } // lib.optionalAttrs service.suppressWhois {
+    suppressWhois = true;
+  } // lib.optionalAttrs (service.whoisTimeout != null) {
+    whoisTimeout = service.whoisTimeout;
+  } // lib.optionalAttrs service.suppressTailnetDialer {
+    suppressTailnetDialer = true;
+  } // lib.optionalAttrs (service.authURL != null) {
+    authURL = service.authURL;
+  } // lib.optionalAttrs (service.authPath != "/api/authz/forward-auth") {
+    authPath = service.authPath;
+  } // lib.optionalAttrs (service.authTimeout != null && service.authTimeout != "5s") {
+    authTimeout = service.authTimeout;
+  } // lib.optionalAttrs (service.authCopyHeaders != {}) {
+    authCopyHeaders = formatHeaders service.authCopyHeaders;
+  } // lib.optionalAttrs service.authInsecureHTTPS {
+    authInsecureHTTPS = true;
+  } // lib.optionalAttrs service.authBypassForTailnet {
+    authBypassForTailnet = true;
+  } // lib.optionalAttrs (service.timeout != null) {
+    timeout = service.timeout;
+  } // lib.optionalAttrs (service.readHeaderTimeout != null) {
+    readHeaderTimeout = service.readHeaderTimeout;
+  } // lib.optionalAttrs service.tsnetVerbose {
+    tsnetVerbose = true;
+  } // lib.optionalAttrs (stateBaseDir != null) {
+    # Each service gets its own subdirectory within the state directory
+    stateDir = "${stateBaseDir}/${name}";
+  } // lib.optionalAttrs (authKeyPath != null) {
+    # All services share the same auth key path
+    authkeyPath = authKeyPath;
+  };
+
+  # Generate YAML config for multi-service mode
+  # This generates a template that will be expanded at runtime with systemd variables
+  generateMultiServiceConfig = {services, stateBaseDir ? null, authKeyPath ? null}: let
+    servicesList = lib.mapAttrsToList (name: service:
+      serviceToYaml {
+        inherit name service stateBaseDir authKeyPath;
+      }
+    ) services;
+  in pkgs.writeText "tsnsrv-config.yaml" (
+    lib.generators.toYAML {} {
+      services = servicesList;
+    }
+  );
 in {
   options = with lib; {
     services.tsnsrv.enable = mkOption {
@@ -520,6 +602,19 @@ in {
       RestrictSUIDSGID = true;
       UMask = "0066";
     };
+
+    # Determine which package to use (use first service's package or default)
+    multiServicePackage = let
+      firstService = lib.head (lib.attrValues config.services.tsnsrv.services);
+    in firstService.package or config.services.tsnsrv.defaults.package;
+
+    # Collect all supplemental groups from all services
+    allSupplementalGroups = lib.unique (
+      lib.flatten (
+        lib.mapAttrsToList (_: service: service.supplementalGroups)
+        config.services.tsnsrv.services
+      )
+    );
   in
     lib.mkMerge [
       (lib.mkIf (config.services.tsnsrv.enable || config.virtualisation.oci-sidecars.tsnsrv.enable)
@@ -532,47 +627,40 @@ in {
           })
           config.services.tsnsrv.services;
 
-        systemd.services =
-          lib.mapAttrs' (
-            name: service':
-              lib.nameValuePair
-              "tsnsrv-${name}"
-              (let
-                service =
-                  service'
-                  // lib.optionalAttrs (service'.acmeHost != null) {
-                    certificateFile = "${config.security.acme.certs.${service.acmeHost}.directory}/fullchain.pem";
-                    certificateKey = "${config.security.acme.certs.${service.acmeHost}.directory}/key.pem";
-                  };
-              in {
-                wantedBy = ["multi-user.target"];
-                after = ["network-online.target"];
-                wants = ["network-online.target"];
-                script = ''
-                  exec ${lib.getExe service.package} \
-                    "-stateDir=$STATE_DIRECTORY/tsnet-tsnsrv" \
-                    "-authkeyPath=$CREDENTIALS_DIRECTORY/authKey" \
-                    ${lib.escapeShellArgs (serviceArgs {inherit name service;})}
-                '';
-                stopIfChanged = false;
-                serviceConfig =
-                  {
-                    DynamicUser = true;
-                    Restart = "always";
-                    SupplementaryGroups = [config.users.groups.tsnsrv.name] ++ service.supplementalGroups;
-                    StateDirectory = "tsnsrv-${name}";
-                    StateDirectoryMode = "0700";
-                    LoadCredential = [
-                      "authKey:${service.authKeyPath}"
-                    ];
-                  }
-                  // lib.optionalAttrs (service.loginServerUrl != null) {
-                    Environment = "TS_URL=${service.loginServerUrl}";
-                  }
-                  // lockedDownserviceConfig;
-              })
-          )
-          config.services.tsnsrv.services;
+        systemd.services.tsnsrv-all = let
+          configFile = generateMultiServiceConfig {
+            services = config.services.tsnsrv.services;
+            stateBaseDir = "/var/lib/tsnsrv-all";
+            authKeyPath = "/run/credentials/tsnsrv-all.service/authKey";
+          };
+          # Use first service for loginServerUrl, or null
+          firstService = lib.head (lib.attrValues config.services.tsnsrv.services);
+          loginServerUrl = firstService.loginServerUrl or null;
+        in {
+          wantedBy = ["multi-user.target"];
+          after = ["network-online.target"];
+          wants = ["network-online.target"];
+          script = ''
+            exec ${lib.getExe multiServicePackage} -config=${configFile}
+          '';
+          stopIfChanged = false;
+          serviceConfig =
+            ({
+              DynamicUser = true;
+              Restart = "always";
+              SupplementaryGroups = [config.users.groups.tsnsrv.name] ++ allSupplementalGroups;
+              StateDirectory = "tsnsrv-all";
+              StateDirectoryMode = "0700";
+              LoadCredential = [
+                "authKey:${config.services.tsnsrv.defaults.authKeyPath}"
+              ];
+              Environment = ["HOME=%S/tsnsrv-all"];
+            }
+            // lib.optionalAttrs (loginServerUrl != null) {
+              Environment = ["HOME=%S/tsnsrv-all" "TS_URL=${loginServerUrl}"];
+            })
+            // lockedDownserviceConfig;
+        };
       })
 
       (lib.mkIf config.virtualisation.oci-sidecars.tsnsrv.enable {
