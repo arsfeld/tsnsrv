@@ -1,0 +1,81 @@
+# tsnsrv Multi-Service Configuration Example
+# Use with: tsnsrv -config config.yaml
+
+services:
+  # Example 1: Basic funnel service with forward auth
+  - name: web-app
+    upstream: http://localhost:8080
+    funnel: true
+    authURL: http://authelia:9091
+    authPath: /api/authz/forward-auth
+    authCopyHeaders:
+      Remote-User: ""
+      Remote-Groups: ""
+    prefixes:
+      - /app
+
+  # Example 2: Internal Tailnet-only service
+  - name: internal-api
+    upstream: http://localhost:8081
+    funnel: false
+    tags:
+      - tag:production
+    suppressWhois: false
+
+  # Example 3: Funnel-only service with path restrictions
+  - name: public-docs
+    upstream: http://localhost:8082
+    funnel: true
+    funnelOnly: true
+    prefixes:
+      - funnel:/docs
+      - funnel:/api
+    stripPrefix: true
+
+  # Example 4: Service with custom TLS and headers
+  - name: secure-service
+    upstream: https://localhost:8443
+    insecureHTTPS: false
+    funnel: true
+    upstreamHeaders:
+      X-Custom-Header: value
+    authBypassForTailnet: true
+
+  # Example 5: Service connecting via Unix socket
+  - name: socket-service
+    upstream: http://unix
+    upstreamUnixAddr: /var/run/app.sock
+    funnel: false
+    ephemeral: true
+
+# Common configuration notes:
+#
+# Authentication:
+#   - authURL: Full URL to forward auth service
+#   - authPath: Endpoint path (default: /api/authz/forward-auth)
+#   - authCopyHeaders: Headers to copy from auth response
+#   - authBypassForTailnet: Skip auth for Tailscale users
+#
+# Network Exposure:
+#   - funnel: Expose via Tailscale Funnel (public internet)
+#   - funnelOnly: Only expose via Funnel, not on Tailnet
+#
+# Path Control:
+#   - prefixes: Allowed URL prefixes (empty = allow all)
+#   - stripPrefix: Remove matched prefix before forwarding
+#   - Prefix formats:
+#     - "/path" - Allow on both Tailnet and Funnel
+#     - "funnel:/path" - Only allow on Funnel
+#     - "tailnet:/path" - Only allow on Tailnet
+#
+# Tailscale Options:
+#   - tags: Tags to advertise (format: "tag:name")
+#   - ephemeral: Delete service when offline
+#   - stateDir: Custom state directory
+#   - authkeyPath: Path to auth key file
+#
+# Timeouts:
+#   - timeout: Tailnet connection timeout (default: 1m)
+#   - authTimeout: Auth request timeout (default: 5s)
+#   - whoisTimeout: User identity lookup timeout (default: 1s)
+#   - readHeaderTimeout: HTTP header read timeout (default: 0)

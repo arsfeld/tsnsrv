@@ -185,8 +185,26 @@ type ValidTailnetSrv struct {
 
 // TailnetSrvFromArgs constructs a validated tailnet service from commandline arguments.
 func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error) {
+	services, cmd, err := TailnetSrvsFromArgs(args)
+	if err != nil {
+		return nil, cmd, err
+	}
+	if len(services) != 1 {
+		return nil, cmd, fmt.Errorf("expected single service, got %d", len(services))
+	}
+	return services[0], cmd, nil
+}
+
+var errConfigAndCLI = errors.New("cannot use -config with other CLI flags; use either config file or CLI mode")
+
+// TailnetSrvsFromArgs constructs validated tailnet services from commandline arguments.
+// Supports both single-service CLI mode and multi-service config file mode via -config flag.
+func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, error) {
 	s := &TailnetSrv{}
+	var configPath string
+
 	fs := flag.NewFlagSet("tsnsrv", flag.ExitOnError)
+	fs.StringVar(&configPath, "config", "", "Path to configuration file for multi-service mode")
 	fs.StringVar(&s.UpstreamTCPAddr, "upstreamTCPAddr", "", "Proxy to an HTTP service listening on this TCP address")
 	fs.StringVar(&s.UpstreamUnixAddr, "upstreamUnixAddr", "", "Proxy to an HTTP service listening on this UNIX domain socket address")
 	fs.BoolVar(&s.Ephemeral, "ephemeral", false, "Declare this service ephemeral")
@@ -221,18 +239,44 @@ func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error)
 	fs.BoolVar(&s.AuthBypassForTailnet, "authBypassForTailnet", false, "Bypass forward auth for requests from Tailscale network (authenticated users)")
 
 	root := &ffcli.Command{
-		ShortUsage: fmt.Sprintf("%s -name <serviceName> [flags] <toURL>", path.Base(args[0])),
+		ShortUsage: fmt.Sprintf("%s [-config <file>] OR [-name <serviceName> [flags] <toURL>]", path.Base(args[0])),
 		FlagSet:    fs,
 		Exec:       func(context.Context, []string) error { return nil },
 	}
 	if err := root.Parse(args[1:]); err != nil {
 		return nil, root, fmt.Errorf("could not parse args: %w", err)
 	}
+
+	// Config file mode
+	if configPath != "" {
+		// Verify no other CLI flags were provided (except tsnetVerbose for debugging)
+		if s.Name != "" || len(root.FlagSet.Args()) > 0 {
+			return nil, root, errConfigAndCLI
+		}
+
+		cfg, err := LoadConfig(configPath)
+		if err != nil {
+			return nil, root, fmt.Errorf("loading config file: %w", err)
+		}
+
+		var services []*ValidTailnetSrv
+		for i, svcCfg := range cfg.Services {
+			ts := svcCfg.ToTailnetSrv()
+			valid, err := ts.validate([]string{svcCfg.Upstream})
+			if err != nil {
+				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
+			}
+			services = append(services, valid)
+		}
+		return services, root, nil
+	}
+
+	// CLI mode (original behavior)
 	valid, err := s.validate(root.FlagSet.Args())
 	if err != nil {
 		return nil, root, fmt.Errorf("failed to validate args: %w", err)
 	}
-	return valid, root, nil
+	return []*ValidTailnetSrv{valid}, root, nil
 }
 
 var errNameRequired = errors.New("tsnsrv needs a -name")

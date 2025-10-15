@@ -28,28 +28,28 @@ type contextKey struct{}
 var proxyContextKey = contextKey{}
 
 var (
-	requestDurations = promauto.NewSummary(prometheus.SummaryOpts{
+	requestDurations = promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name:       "tsnsrv_request_duration_ns",
 		Help:       "Duration of requests served",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	})
+	}, []string{"service_name"})
 	responseStatusClasses = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "tsnsrv_response_status_classes",
 		Help: "Responses by status code class (1xx, etc)",
-	}, []string{"status_code_class"})
-	proxyErrors = promauto.NewCounter(prometheus.CounterOpts{
+	}, []string{"service_name", "status_code_class"})
+	proxyErrors = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "tsnsrv_proxy_errors",
 		Help: "Number of errors encountered proxying requests",
-	})
+	}, []string{"service_name"})
 	authRequests = promauto.NewCounterVec(prometheus.CounterOpts{
 		Name: "tsnsrv_auth_requests_total",
 		Help: "Total number of authorization requests",
-	}, []string{"status"})
-	authDurations = promauto.NewSummary(prometheus.SummaryOpts{
+	}, []string{"service_name", "status"})
+	authDurations = promauto.NewSummaryVec(prometheus.SummaryOpts{
 		Name:       "tsnsrv_auth_duration_ns",
 		Help:       "Duration of authorization requests",
 		Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001},
-	})
+	}, []string{"service_name"})
 )
 
 type proxyContext struct {
@@ -57,14 +57,18 @@ type proxyContext struct {
 	who          *apitype.WhoIsResponse
 	originalURL  *url.URL
 	rewrittenURL *url.URL
+	serviceName  string
 }
 
 func (c *proxyContext) observeResponse(res *http.Response) {
 	elapsed := time.Since(c.start)
-	requestDurations.Observe(float64(elapsed))
+	requestDurations.With(prometheus.Labels{"service_name": c.serviceName}).Observe(float64(elapsed))
 
 	statusClass := fmt.Sprintf("%dxx", res.StatusCode/100)
-	responseStatusClasses.With(prometheus.Labels{"status_code_class": statusClass}).Inc()
+	responseStatusClasses.With(prometheus.Labels{
+		"service_name":      c.serviceName,
+		"status_code_class": statusClass,
+	}).Inc()
 
 	login := ""
 	node := ""
@@ -74,6 +78,7 @@ func (c *proxyContext) observeResponse(res *http.Response) {
 	}
 
 	slog.Info("served",
+		"service", c.serviceName,
 		"original", c.originalURL,
 		"rewritten", c.rewrittenURL,
 		"origin_login", login,
@@ -93,9 +98,10 @@ func (s *ValidTailnetSrv) modifyResponse(res *http.Response) error {
 
 func (s *ValidTailnetSrv) errorHandler(rw http.ResponseWriter, _ *http.Request, err error) {
 	slog.Warn("proxy error",
+		"service", s.Name,
 		"error", err,
 	)
-	proxyErrors.Inc()
+	proxyErrors.With(prometheus.Labels{"service_name": s.Name}).Inc()
 	rw.WriteHeader(http.StatusBadGateway)
 }
 
@@ -136,6 +142,7 @@ func (s *ValidTailnetSrv) rewrite(r *httputil.ProxyRequest) {
 		originalURL:  r.In.URL,
 		rewrittenURL: r.Out.URL,
 		who:          who,
+		serviceName:  s.Name,
 	}))
 }
 
@@ -240,6 +247,7 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 			if err == nil && who.UserProfile.ID != 0 && who.UserProfile.LoginName != "tagged-devices" {
 				// Request is from authenticated Tailscale user, bypass auth
 				slog.Info("auth bypassed",
+					"service", s.Name,
 					"user", who.UserProfile.LoginName,
 					"remote_addr", r.RemoteAddr,
 					"url", r.URL,
@@ -287,18 +295,24 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 		authResp, err := client.Do(authReq)
 		if err != nil {
 			elapsed := time.Since(start)
-			authDurations.Observe(float64(elapsed))
-			authRequests.With(prometheus.Labels{"status": "error"}).Inc()
-			slog.Warn("auth request failed", "error", err, "url", authReq.URL)
+			authDurations.With(prometheus.Labels{"service_name": s.Name}).Observe(float64(elapsed))
+			authRequests.With(prometheus.Labels{
+				"service_name": s.Name,
+				"status":       "error",
+			}).Inc()
+			slog.Warn("auth request failed", "service", s.Name, "error", err, "url", authReq.URL)
 			http.Error(w, "Authorization service unavailable", http.StatusBadGateway)
 			return
 		}
 		defer authResp.Body.Close()
 
 		elapsed := time.Since(start)
-		authDurations.Observe(float64(elapsed))
+		authDurations.With(prometheus.Labels{"service_name": s.Name}).Observe(float64(elapsed))
 		statusClass := fmt.Sprintf("%dxx", authResp.StatusCode/100)
-		authRequests.With(prometheus.Labels{"status": statusClass}).Inc()
+		authRequests.With(prometheus.Labels{
+			"service_name": s.Name,
+			"status":       statusClass,
+		}).Inc()
 
 		// If auth service returns 2xx, continue with the request
 		if authResp.StatusCode >= 200 && authResp.StatusCode < 300 {
@@ -312,6 +326,7 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 			}
 
 			slog.Info("auth granted",
+				"service", s.Name,
 				"status", authResp.StatusCode,
 				"duration", elapsed,
 				"remote_addr", r.RemoteAddr,
@@ -324,6 +339,7 @@ func (s *ValidTailnetSrv) authMiddleware(next http.Handler) http.Handler {
 
 		// For non-2xx responses, return the auth service response to client
 		slog.Info("auth denied",
+			"service", s.Name,
 			"status", authResp.StatusCode,
 			"remote_addr", r.RemoteAddr,
 			"duration", elapsed,

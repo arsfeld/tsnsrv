@@ -11,11 +11,14 @@ import (
 )
 
 func main() {
-	s, cmd, err := tsnsrv.TailnetSrvFromArgs(os.Args)
+	services, cmd, err := tsnsrv.TailnetSrvsFromArgs(os.Args)
 	if err != nil {
 		log.Fatalf("Invalid CLI usage. Errors:\n%v\n\n%v", errors.Unwrap(err), ffcli.DefaultUsageFunc(cmd))
 	}
-	if err := s.Run(context.Background()); err != nil {
+
+	// Use orchestrator for both single and multi-service modes
+	orchestrator := tsnsrv.NewOrchestrator(services)
+	if err := orchestrator.Run(context.Background()); err != nil {
 		log.Fatal(err)
 	}
 }
