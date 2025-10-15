@@ -22,7 +22,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"golang.org/x/exp/slog"
 	"golang.org/x/oauth2/clientcredentials"
-	"tailscale.com/client/local"
 	"tailscale.com/client/tailscale/v2"
 	"tailscale.com/tsnet"
 	"tailscale.com/types/logger"
