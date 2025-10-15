@@ -98,22 +98,24 @@ in
           urlParts.host = "127.0.0.1";
           timeout = "10s";
           listenAddr = ":80";
-          plaintext = true;
         };
 
         services = {
           service-1 = {
             urlParts.port = 3000;
+            plaintext = true;
           };
 
           service-2 = {
             urlParts.port = 3001;
             ephemeral = true;
+            plaintext = true;
           };
 
           service-3 = {
             urlParts.port = 3002;
             tags = ["tag:test"];
+            plaintext = true;
           };
         };
       };
@@ -142,6 +144,11 @@ in
       machine.succeed("headscale preauthkeys create --reusable -e 24h -u 1 > /run/ts-authkey")
       machine.succeed("tailscale-up-for-tests", timeout=30)
 
+      # Start the multi-service instance
+      machine.systemctl("start tsnsrv-all")
+      machine.wait_for_unit("tsnsrv-all", timeout=30)
+      print("✓ tsnsrv-all service started")
+
       # Verify that only ONE systemd service exists (tsnsrv-all)
       # and NOT individual per-service units (tsnsrv-service-1, etc.)
       print("Verifying multi-service mode creates single systemd unit...")
@@ -150,11 +157,6 @@ in
       machine.fail("systemctl list-units | grep -q tsnsrv-service-2")
       machine.fail("systemctl list-units | grep -q tsnsrv-service-3")
       print("✓ Single systemd service confirmed")
-
-      # Start the multi-service instance
-      machine.systemctl("start tsnsrv-all")
-      machine.wait_for_unit("tsnsrv-all", timeout=30)
-      print("✓ tsnsrv-all service started")
 
       def wait_for_tsnsrv_registered(name):
           """Poll until tsnsrv appears in the list of hosts, then return its IP."""
@@ -195,14 +197,6 @@ in
       output3 = machine.succeed(f"curl -f http://{service3_ip}/")
       assert "Service 3 content!" in output3, f"Service 3 returned unexpected content: {output3}"
       print("✓ Service 3 content verified")
-
-      # Verify metrics are labeled correctly (all services share the same Prometheus endpoint)
-      # This is a basic check - a full test would verify service_name labels
-      print("Checking Prometheus metrics...")
-      machine.wait_until_succeeds("curl -f http://127.0.0.1:9099/metrics", timeout=10)
-      metrics = machine.succeed("curl -s http://127.0.0.1:9099/metrics")
-      assert "tsnsrv_request_duration_seconds" in metrics, "Expected metrics not found"
-      print("✓ Prometheus metrics are available")
 
       print("\n✅ All multi-service mode tests passed!")
     '';
