@@ -385,12 +385,22 @@
 
   # Generate YAML config for multi-service mode
   # This generates a template that will be expanded at runtime with systemd variables
-  generateMultiServiceConfig = {services, stateBaseDir ? null, authKeyPath ? null}: let
-    servicesList = lib.mapAttrsToList (name: service:
-      serviceToYaml {
+  generateMultiServiceConfig = {services, stateBaseDir ? null, authKeyPath ? null, prometheusAddr ? ":9099"}: let
+    # Convert services to list and set prometheus only on first service
+    serviceNames = lib.attrNames services;
+    firstServiceName = lib.head serviceNames;
+
+    servicesList = lib.imap1 (idx: name: let
+      service = services.${name};
+      # Only the first service gets the prometheus address
+      serviceYaml = serviceToYaml {
         inherit name service stateBaseDir authKeyPath;
-      }
-    ) services;
+      };
+    in
+      if idx == 1 && prometheusAddr != null
+      then serviceYaml // { prometheusAddr = prometheusAddr; }
+      else serviceYaml
+    ) serviceNames;
   in pkgs.writeText "tsnsrv-config.yaml" (
     lib.generators.toYAML {} {
       services = servicesList;
