@@ -1,5 +1,17 @@
 # tsnsrv - a reverse proxy on your tailnet
 
+> **🔀 FORK NOTICE**
+>
+> This is a feature-enhanced fork of tsnsrv with significant additions:
+> - **Multi-service mode**: Run multiple services in a single process (CLI flags or YAML config)
+> - **Forward authentication**: Integration with Authelia, Authentik, and other auth providers
+> - **Enhanced NixOS module**: Multi-service support, OCI sidecars, ACME integration
+> - **Tailscale user bypass**: Skip external auth for Tailscale-authenticated users
+>
+> These features are not available in the original upstream version.
+
+---
+
 This package includes a little go program that sets up a reverse proxy
 listening on your tailnet (optionally with a funnel), forwarding
 requests to a service reachable from the machine running this
@@ -113,6 +125,7 @@ tsnsrv -name my-app -funnel \
 
 #### Example with Authelia:
 
+Command line:
 ```sh
 # Run tsnsrv with Authelia forward auth
 tsnsrv -name my-app \
@@ -124,6 +137,42 @@ tsnsrv -name my-app \
   -authCopyHeader "Remote-Email: " \
   http://localhost:8080
 ```
+
+NixOS configuration:
+```nix
+services.tsnsrv = {
+  enable = true;
+  defaults = {
+    authKeyPath = config.age.secrets.tailscale-authkey.path;
+  };
+  services = {
+    my-app = {
+      urlParts = {
+        protocol = "http";
+        host = "localhost";
+        port = 8080;
+      };
+      funnel = true;  # Optional: expose on public internet
+      authURL = "http://authelia:9091";
+      authPath = "/api/authz/forward-auth";
+      authTimeout = "10s";
+      authCopyHeaders = {
+        "Remote-User" = "";
+        "Remote-Groups" = "";
+        "Remote-Email" = "";
+      };
+      # Optional: bypass auth for Tailscale-authenticated users
+      authBypassForTailnet = true;
+    };
+  };
+};
+```
+
+This configuration will:
+- Forward all requests to Authelia for authentication
+- Copy user identity headers (Remote-User, Remote-Groups, Remote-Email) to the upstream service
+- Allow Tailscale users to bypass Authelia authentication (when `authBypassForTailnet = true`)
+- Expose the service on the public internet via Tailscale Funnel (when `funnel = true`)
 
 ### Passing requestor information to upstream services
 
@@ -170,3 +219,137 @@ Once you have a oauth client (and a command line) with these
 requirements, all you need to do is to use the client _secret_ (the
 client ID is irrelevant for us) as the tailscale auth key and tsnsrv
 will do the rest.
+
+### Running multiple services in a single process
+
+When running many tsnsrv services on the same machine, you can reduce resource overhead by running them in a single process. Instead of running separate `tsnsrv` invocations for each service, a single tsnsrv process can manage multiple services.
+
+#### Command line usage
+
+Create a YAML configuration file (e.g., `config.yaml`):
+
+```yaml
+services:
+  - name: web-app
+    upstream: http://localhost:8080
+    funnel: true
+    authURL: http://authelia:9091
+    authCopyHeaders:
+      Remote-User: ""
+      Remote-Groups: ""
+
+  - name: internal-api
+    upstream: http://localhost:8081
+    funnel: false
+    suppressWhois: false
+
+  - name: public-docs
+    upstream: http://localhost:8082
+    funnel: true
+    prefixes:
+      - funnel:/docs
+      - funnel:/api
+```
+
+Then run tsnsrv with the `-config` flag:
+
+```sh
+tsnsrv -config config.yaml
+```
+
+> **⚠️ IMPORTANT**: When using `-config` mode, command-line flags (except `-config` itself) are **completely ignored**. All configuration must be in the YAML file, including critical settings like `stateDir` and `authkeyPath`. If you need to override these per-service, add them to each service definition in the config file:
+>
+> ```yaml
+> services:
+>   - name: my-service
+>     upstream: http://localhost:8080
+>     stateDir: /var/lib/tsnsrv/my-service
+>     authkeyPath: /etc/tsnsrv/authkey.secret
+> ```
+
+See `config.example.yaml` for a complete example with all available options.
+
+#### Using CLI flags (no config file required)
+
+As an alternative to config files, you can define multiple services directly via CLI flags using the `-service` flag (repeatable):
+
+```sh
+tsnsrv \
+  -service "name=web-app,upstream=http://localhost:8080,funnel=true" \
+  -service "name=internal-api,upstream=http://localhost:8081,funnel=false"
+```
+
+**Available configuration keys** (comma-separated `key=value` pairs):
+- **Required**: `name`, `upstream`
+- **Tailscale**: `ephemeral`, `tag`, `stateDir`, `authkeyPath`
+- **Network**: `funnel`, `funnelOnly`, `listenAddr`, `plaintext`
+- **Proxy**: `recommendedProxyHeaders`, `prefix`, `stripPrefix`, `upstreamHeader`
+- **Auth**: `authURL`, `authPath`, `authTimeout`, `authCopyHeader`, `authInsecureHTTPS`, `authBypassForTailnet`
+- **Security**: `insecureHTTPS`, `upstreamAllowInsecureCiphers`
+- **Monitoring**: `prometheusAddr`
+- And more (see CLAUDE.md for complete list)
+
+**Boolean values**: `true`/`false`, `yes`/`no`, `1`/`0` (case-insensitive)
+
+**Duration values**: Use Go duration format like `1s`, `5m`, `1h30m`
+
+**Multiple values** (tags, prefixes, headers): Repeat the key:
+```sh
+tsnsrv -service "name=web,upstream=http://localhost:8080,tag=tag:web,tag=tag:prod,prefix=/api,prefix=/public"
+```
+
+**Complete example with auth:**
+```sh
+tsnsrv \
+  -service "name=web-app,upstream=http://localhost:8080,funnel=true,authURL=http://authelia:9091,authCopyHeader=Remote-User:,authCopyHeader=Remote-Groups:,authBypassForTailnet=true" \
+  -service "name=internal-api,upstream=http://localhost:8081,funnel=false,tag=tag:api"
+```
+
+**Note**: The three modes (single-service CLI, config file, and multi-service CLI) are mutually exclusive - you cannot mix them.
+
+#### NixOS configuration
+
+In NixOS, the module always runs all configured services in a single systemd unit (`tsnsrv-all.service`):
+
+```nix
+services.tsnsrv = {
+  enable = true;
+
+  defaults = {
+    authKeyPath = config.age.secrets.tailscale-authkey.path;
+    urlParts.host = "localhost";
+  };
+
+  services = {
+    web-app = {
+      urlParts.port = 8080;
+      funnel = true;
+      authURL = "http://authelia:9091";
+      authCopyHeaders = {
+        "Remote-User" = "";
+        "Remote-Groups" = "";
+      };
+    };
+
+    internal-api = {
+      urlParts.port = 8081;
+      funnel = false;
+    };
+
+    public-docs = {
+      urlParts.port = 8082;
+      funnel = true;
+      prefixes = [
+        "funnel:/docs"
+        "funnel:/api"
+      ];
+    };
+  };
+};
+```
+
+**Benefits:**
+- Reduced memory footprint (single Go process, single tsnet instance)
+- Lower CPU overhead from fewer processes
+- Shared Prometheus metrics endpoint for all services
+- Simpler systemd service management

@@ -1,5 +1,12 @@
 # tsnsrv Multi-Service Configuration Example
 # Use with: tsnsrv -config config.yaml
+#
+# IMPORTANT: When using -config mode, ALL configuration must be in this file.
+# Command-line flags (except -config itself) are IGNORED.
+# This includes critical settings like stateDir and authkeyPath!
+#
+# If you need to specify state directory or auth key path, you MUST include
+# them in each service definition below, or use environment variables.
 
 services:
   # Example 1: Basic funnel service with forward auth
@@ -48,6 +55,14 @@ services:
     funnel: false
     ephemeral: true
 
+  # Example 6: Service with explicit state directory and auth key
+  # (Required when not using environment variables or systemd credentials)
+  - name: custom-state-service
+    upstream: http://localhost:8084
+    stateDir: /var/lib/tsnsrv/custom-state
+    authkeyPath: /etc/tsnsrv/authkey.secret
+    funnel: false
+
 # Common configuration notes:
 #
 # Authentication:
@@ -71,8 +86,8 @@ services:
 # Tailscale Options:
 #   - tags: Tags to advertise (format: "tag:name")
 #   - ephemeral: Delete service when offline
-#   - stateDir: Custom state directory
-#   - authkeyPath: Path to auth key file
+#   - stateDir: Custom state directory (REQUIRED in config mode unless using defaults)
+#   - authkeyPath: Path to auth key file (REQUIRED in config mode unless using env vars)
 #
 # Timeouts:
 #   - timeout: Tailnet connection timeout (default: 1m)
