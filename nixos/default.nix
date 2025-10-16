@@ -673,10 +673,10 @@ in {
               LoadCredential = [
                 "authKey:${config.services.tsnsrv.defaults.authKeyPath}"
               ];
-              Environment = ["HOME=%S/tsnsrv-all"];
+              Environment = ["HOME=%S/tsnsrv-all" "TS_DEBUG_DISABLE_PORTLIST=true"];
             }
             // lib.optionalAttrs (loginServerUrl != null) {
-              Environment = ["HOME=%S/tsnsrv-all" "TS_URL=${loginServerUrl}"];
+              Environment = ["HOME=%S/tsnsrv-all" "TS_URL=${loginServerUrl}" "TS_DEBUG_DISABLE_PORTLIST=true"];
             })
             // lockedDownserviceConfig;
         };
