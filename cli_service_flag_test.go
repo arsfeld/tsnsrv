@@ -343,7 +343,7 @@ func TestMultiServiceCLIMode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			services, _, err := TailnetSrvsFromArgs(tt.args)
+			services, _, _, err := TailnetSrvsFromArgs(tt.args)
 
 			if tt.expectError {
 				assert.Error(t, err)

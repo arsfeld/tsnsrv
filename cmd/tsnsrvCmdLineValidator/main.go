@@ -11,7 +11,7 @@ import (
 )
 
 func main() {
-	_, cmd, err := tsnsrv.TailnetSrvFromArgs(os.Args)
+	_, _, cmd, err := tsnsrv.TailnetSrvFromArgs(os.Args)
 	if err != nil {
 		log.Fatalf("Invalid CLI usage. Errors:\n%v\n\n%v", errors.Unwrap(err), ffcli.DefaultUsageFunc(cmd))
 	}

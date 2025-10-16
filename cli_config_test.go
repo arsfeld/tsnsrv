@@ -24,7 +24,7 @@ services:
 	err := os.WriteFile(configPath, []byte(configYAML), 0600)
 	require.NoError(t, err)
 
-	services, cmd, err := TailnetSrvsFromArgs([]string{"tsnsrv", "-config", configPath})
+	services, _, cmd, err := TailnetSrvsFromArgs([]string{"tsnsrv", "-config", configPath})
 	require.NoError(t, err)
 	require.NotNil(t, cmd)
 	require.Len(t, services, 2)
@@ -38,7 +38,7 @@ services:
 }
 
 func TestTailnetSrvsFromArgs_CLIMode(t *testing.T) {
-	services, cmd, err := TailnetSrvsFromArgs([]string{
+	services, _, cmd, err := TailnetSrvsFromArgs([]string{
 		"tsnsrv",
 		"-name", "test-service",
 		"-funnel",
@@ -66,7 +66,7 @@ services:
 	require.NoError(t, err)
 
 	// Try to use both config and CLI flags
-	_, _, err = TailnetSrvsFromArgs([]string{
+	_, _, _, err = TailnetSrvsFromArgs([]string{
 		"tsnsrv",
 		"-config", configPath,
 		"-name", "test",
@@ -78,7 +78,7 @@ services:
 
 func TestTailnetSrvFromArgs_BackwardCompatibility(t *testing.T) {
 	// Test that the original function still works
-	service, cmd, err := TailnetSrvFromArgs([]string{
+	service, _, cmd, err := TailnetSrvFromArgs([]string{
 		"tsnsrv",
 		"-name", "compat-test",
 		"http://localhost:7000",
@@ -106,7 +106,7 @@ services:
 	require.NoError(t, err)
 
 	// TailnetSrvFromArgs (singular) should fail with multiple services
-	_, _, err = TailnetSrvFromArgs([]string{"tsnsrv", "-config", configPath})
+	_, _, _, err = TailnetSrvFromArgs([]string{"tsnsrv", "-config", configPath})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "expected single service, got 2")
 }
@@ -123,7 +123,7 @@ services:
 	err := os.WriteFile(configPath, []byte(configYAML), 0600)
 	require.NoError(t, err)
 
-	_, _, err = TailnetSrvsFromArgs([]string{"tsnsrv", "-config", configPath})
+	_, _, _, err = TailnetSrvsFromArgs([]string{"tsnsrv", "-config", configPath})
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "upstream URL is required")
 }

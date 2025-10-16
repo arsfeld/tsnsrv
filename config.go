@@ -156,8 +156,7 @@ func (c *Config) Validate() error {
 }
 
 // ToTailnetSrv converts a ServiceConfig to TailnetSrv struct
-// prometheusAddr is the process-level Prometheus/pprof address
-func (sc *ServiceConfig) ToTailnetSrv(prometheusAddr string) *TailnetSrv {
+func (sc *ServiceConfig) ToTailnetSrv() *TailnetSrv {
 	ts := &TailnetSrv{
 		Name:                         sc.Name,
 		UpstreamTCPAddr:              sc.UpstreamTCPAddr,
@@ -175,7 +174,6 @@ func (sc *ServiceConfig) ToTailnetSrv(prometheusAddr string) *TailnetSrv {
 		InsecureHTTPS:                sc.InsecureHTTPS,
 		WhoisTimeout:                 sc.WhoisTimeout,
 		SuppressWhois:                sc.SuppressWhois,
-		PrometheusAddr:               prometheusAddr,
 		SuppressTailnetDialer:        sc.SuppressTailnetDialer,
 		ReadHeaderTimeout:            sc.ReadHeaderTimeout,
 		TsnetVerbose:                 sc.TsnetVerbose,
@@ -203,9 +201,6 @@ func (sc *ServiceConfig) ToTailnetSrv(prometheusAddr string) *TailnetSrv {
 	}
 	if ts.Timeout == 0 {
 		ts.Timeout = 1 * time.Minute
-	}
-	if ts.PrometheusAddr == "" {
-		ts.PrometheusAddr = ":9099"
 	}
 	ts.RecommendedProxyHeaders = sc.RecommendedProxyHeaders
 	// Default to true if not explicitly set to false

@@ -202,7 +202,7 @@ func TestServiceConfigToTailnetSrv(t *testing.T) {
 		AuthTimeout:  10 * time.Second,
 	}
 
-	ts := sc.ToTailnetSrv(":9099")
+	ts := sc.ToTailnetSrv()
 
 	assert.Equal(t, "test-service", ts.Name)
 	assert.True(t, ts.Funnel)
@@ -224,7 +224,7 @@ func TestServiceConfigDefaults(t *testing.T) {
 		AuthURL:  "http://authelia:9091",
 	}
 
-	ts := sc.ToTailnetSrv(":9099")
+	ts := sc.ToTailnetSrv()
 
 	// Check defaults are applied
 	assert.Equal(t, ":443", ts.ListenAddr)
@@ -232,7 +232,6 @@ func TestServiceConfigDefaults(t *testing.T) {
 	assert.Equal(t, 5*time.Second, ts.AuthTimeout)
 	assert.Equal(t, 1*time.Second, ts.WhoisTimeout)
 	assert.Equal(t, 1*time.Minute, ts.Timeout)
-	assert.Equal(t, ":9099", ts.PrometheusAddr)
 }
 
 func TestConfigPrometheusAddr(t *testing.T) {
@@ -252,13 +251,13 @@ services:
 			expectedPromAddr: ":8888",
 		},
 		{
-			name: "without prometheusAddr (default)",
+			name: "without prometheusAddr (uses empty string, default applied in cli.go)",
 			configYAML: `
 services:
   - name: test
     upstream: http://localhost:8080
 `,
-			expectedPromAddr: ":9099", // Default applied in cli.go
+			expectedPromAddr: "",
 		},
 	}
 
@@ -272,17 +271,7 @@ services:
 			cfg, err := LoadConfig(configPath)
 			require.NoError(t, err)
 
-			// If prometheusAddr is empty, apply default
-			prometheusAddr := cfg.PrometheusAddr
-			if prometheusAddr == "" {
-				prometheusAddr = ":9099"
-			}
-
-			assert.Equal(t, tt.expectedPromAddr, prometheusAddr)
-
-			// Verify it's passed to ToTailnetSrv
-			ts := cfg.Services[0].ToTailnetSrv(prometheusAddr)
-			assert.Equal(t, tt.expectedPromAddr, ts.PrometheusAddr)
+			assert.Equal(t, tt.expectedPromAddr, cfg.PrometheusAddr)
 		})
 	}
 }

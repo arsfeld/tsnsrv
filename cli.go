@@ -406,7 +406,6 @@ type TailnetSrv struct {
 	InsecureHTTPS                     bool
 	WhoisTimeout                      time.Duration
 	SuppressWhois                     bool
-	PrometheusAddr                    string
 	UpstreamHeaders                   headers
 	SuppressTailnetDialer             bool
 	ReadHeaderTimeout                 time.Duration
@@ -430,15 +429,15 @@ type ValidTailnetSrv struct {
 }
 
 // TailnetSrvFromArgs constructs a validated tailnet service from commandline arguments.
-func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, *ffcli.Command, error) {
-	services, cmd, err := TailnetSrvsFromArgs(args)
+func TailnetSrvFromArgs(args []string) (*ValidTailnetSrv, string, *ffcli.Command, error) {
+	services, prometheusAddr, cmd, err := TailnetSrvsFromArgs(args)
 	if err != nil {
-		return nil, cmd, err
+		return nil, "", cmd, err
 	}
 	if len(services) != 1 {
-		return nil, cmd, fmt.Errorf("expected single service, got %d", len(services))
+		return nil, "", cmd, fmt.Errorf("expected single service, got %d", len(services))
 	}
-	return services[0], cmd, nil
+	return services[0], prometheusAddr, cmd, nil
 }
 
 var errConfigAndCLI = errors.New("cannot use -config with other CLI flags; use either config file or CLI mode")
@@ -448,10 +447,12 @@ var errConfigAndCLI = errors.New("cannot use -config with other CLI flags; use e
 // 1. Single-service CLI mode (legacy): -name <name> <url>
 // 2. Multi-service config file mode: -config <file>
 // 3. Multi-service CLI mode: -service "key=val,..." [-service "key=val,..."]
-func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, error) {
+// Returns the services, the process-level prometheusAddr, the command, and any error.
+func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, string, *ffcli.Command, error) {
 	s := &TailnetSrv{}
 	var configPath string
 	var services serviceFlags
+	var prometheusAddr string
 
 	fs := flag.NewFlagSet("tsnsrv", flag.ExitOnError)
 	fs.StringVar(&configPath, "config", "", "Path to configuration file for multi-service mode")
@@ -476,7 +477,7 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 	fs.BoolVar(&s.InsecureHTTPS, "insecureHTTPS", false, "Disable TLS certificate validation on upstream")
 	fs.DurationVar(&s.WhoisTimeout, "whoisTimeout", 1*time.Second, "Maximum amount of time to spend looking up client identities")
 	fs.BoolVar(&s.SuppressWhois, "suppressWhois", false, "Do not set X-Tailscale-User-* headers in upstream requests")
-	fs.StringVar(&s.PrometheusAddr, "prometheusAddr", ":9099", "Serve prometheus metrics from this address. Empty string to disable.")
+	fs.StringVar(&prometheusAddr, "prometheusAddr", ":9099", "Serve prometheus metrics from this address. Empty string to disable.")
 	fs.Var(&s.UpstreamHeaders, "upstreamHeader", "Additional headers (separated by ': ') on requests to upstream.")
 	fs.BoolVar(&s.SuppressTailnetDialer, "suppressTailnetDialer", false, "Whether to use the stdlib net.Dialer instead of a tailnet-enabled one")
 	fs.DurationVar(&s.ReadHeaderTimeout, "readHeaderTimeout", 0, "Amount of time to allow for reading HTTP request headers. 0 will disable the timeout but expose the service to the slowloris attack.")
@@ -495,7 +496,7 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 		Exec:       func(context.Context, []string) error { return nil },
 	}
 	if err := root.Parse(args[1:]); err != nil {
-		return nil, root, fmt.Errorf("could not parse args: %w", err)
+		return nil, "", root, fmt.Errorf("could not parse args: %w", err)
 	}
 
 	// Determine which mode we're in
@@ -505,63 +506,60 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 
 	// Check for invalid mode combinations
 	if hasConfigFile && hasServiceFlags {
-		return nil, root, errors.New("cannot use both -config and -service flags; choose one mode")
+		return nil, "", root, errors.New("cannot use both -config and -service flags; choose one mode")
 	}
 	if hasConfigFile && hasLegacyFlags {
-		return nil, root, errConfigAndCLI
+		return nil, "", root, errConfigAndCLI
 	}
 	if hasServiceFlags && hasLegacyFlags {
-		return nil, root, errors.New("cannot mix -service flag with legacy single-service flags; use -service for all services")
+		return nil, "", root, errors.New("cannot mix -service flag with legacy single-service flags; use -service for all services")
 	}
 
 	// Mode 1: Config file mode
 	if hasConfigFile {
 		cfg, err := LoadConfig(configPath)
 		if err != nil {
-			return nil, root, fmt.Errorf("loading config file: %w", err)
+			return nil, "", root, fmt.Errorf("loading config file: %w", err)
 		}
 
 		// Use default PrometheusAddr if not specified
-		prometheusAddr := cfg.PrometheusAddr
-		if prometheusAddr == "" {
-			prometheusAddr = ":9099"
+		configPrometheusAddr := cfg.PrometheusAddr
+		if configPrometheusAddr == "" {
+			configPrometheusAddr = ":9099"
 		}
 
 		var validServices []*ValidTailnetSrv
 		for i, svcCfg := range cfg.Services {
-			ts := svcCfg.ToTailnetSrv(prometheusAddr)
+			ts := svcCfg.ToTailnetSrv()
 			valid, err := ts.validate([]string{svcCfg.Upstream})
 			if err != nil {
-				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
+				return nil, "", root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
 			}
 			validServices = append(validServices, valid)
 		}
-		return validServices, root, nil
+		return validServices, configPrometheusAddr, root, nil
 	}
 
 	// Mode 2: Multi-service CLI mode
 	if hasServiceFlags {
-		// Use the top-level prometheusAddr flag (applies to all services)
-		prometheusAddr := s.PrometheusAddr
-
 		var validServices []*ValidTailnetSrv
 		for i, svcCfg := range services {
-			ts := svcCfg.ToTailnetSrv(prometheusAddr)
+			ts := svcCfg.ToTailnetSrv()
 			valid, err := ts.validate([]string{svcCfg.Upstream})
 			if err != nil {
-				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
+				return nil, "", root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
 			}
 			validServices = append(validServices, valid)
 		}
-		return validServices, root, nil
+		return validServices, prometheusAddr, root, nil
 	}
 
 	// Mode 3: Legacy single-service CLI mode
 	valid, err := s.validate(root.FlagSet.Args())
 	if err != nil {
-		return nil, root, fmt.Errorf("failed to validate args: %w", err)
+		return nil, "", root, fmt.Errorf("failed to validate args: %w", err)
 	}
-	return []*ValidTailnetSrv{valid}, root, nil
+	return []*ValidTailnetSrv{valid}, prometheusAddr, root, nil
 }
 
 var errNameRequired = errors.New("tsnsrv needs a -name")
@@ -727,10 +725,6 @@ func (s *ValidTailnetSrv) Run(ctx context.Context) error {
 			transport.TLSClientConfig.CipherSuites = append(transport.TLSClientConfig.CipherSuites, suite.ID)
 		}
 	}
-	err = s.setupPrometheus(srv)
-	if err != nil {
-		slog.Error("Could not setup prometheus listener", "error", err)
-	}
 
 	slog.Info("Serving",
 		"name", s.Name,
@@ -792,10 +786,14 @@ func (s *ValidTailnetSrv) Run(ctx context.Context) error {
 	return fmt.Errorf("while serving: %w", <-serveResults)
 }
 
-func (s *ValidTailnetSrv) setupPrometheus(srv *tsnet.Server) error {
-	if s.PrometheusAddr == "" {
+// StartPrometheusServer starts the Prometheus metrics and pprof HTTP server on the given address.
+// This should be called once at the process level, not per-service.
+// Returns an error if the server fails to start, otherwise runs in the background.
+func StartPrometheusServer(ctx context.Context, addr string) error {
+	if addr == "" {
 		return nil
 	}
+
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 
@@ -806,17 +804,32 @@ func (s *ValidTailnetSrv) setupPrometheus(srv *tsnet.Server) error {
 	mux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("/debug/pprof/trace", pprof.Trace)
 
-	listener, err := srv.Listen("tcp", s.PrometheusAddr)
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		return fmt.Errorf("could not listen on prometheus address %v: %w", s.PrometheusAddr, err)
+		return fmt.Errorf("could not listen on prometheus address %v: %w", addr, err)
 	}
+
+	server := &http.Server{
+		Handler:           mux,
+		ReadHeaderTimeout: 1 * time.Second,
+	}
+
 	go func() {
-		server := http.Server{
-			Handler:           mux,
-			ReadHeaderTimeout: 1 * time.Second,
+		slog.Info("Prometheus/pprof server listening", "addr", addr)
+		if err := server.Serve(listener); err != nil && err != http.ErrServerClosed {
+			slog.Error("Prometheus server failed", "error", err)
 		}
-		slog.Error("failed to listen on prometheus address", "error", server.Serve(listener))
-		os.Exit(20)
 	}()
+
+	// Gracefully shutdown on context cancellation
+	go func() {
+		<-ctx.Done()
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := server.Shutdown(shutdownCtx); err != nil {
+			slog.Error("Error shutting down prometheus server", "error", err)
+		}
+	}()
+
 	return nil
 }
