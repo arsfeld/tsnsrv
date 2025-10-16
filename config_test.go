@@ -202,7 +202,7 @@ func TestServiceConfigToTailnetSrv(t *testing.T) {
 		AuthTimeout:  10 * time.Second,
 	}
 
-	ts := sc.ToTailnetSrv()
+	ts := sc.ToTailnetSrv(":9099")
 
 	assert.Equal(t, "test-service", ts.Name)
 	assert.True(t, ts.Funnel)
@@ -224,7 +224,7 @@ func TestServiceConfigDefaults(t *testing.T) {
 		AuthURL:  "http://authelia:9091",
 	}
 
-	ts := sc.ToTailnetSrv()
+	ts := sc.ToTailnetSrv(":9099")
 
 	// Check defaults are applied
 	assert.Equal(t, ":443", ts.ListenAddr)
@@ -233,4 +233,56 @@ func TestServiceConfigDefaults(t *testing.T) {
 	assert.Equal(t, 1*time.Second, ts.WhoisTimeout)
 	assert.Equal(t, 1*time.Minute, ts.Timeout)
 	assert.Equal(t, ":9099", ts.PrometheusAddr)
+}
+
+func TestConfigPrometheusAddr(t *testing.T) {
+	tests := []struct {
+		name             string
+		configYAML       string
+		expectedPromAddr string
+	}{
+		{
+			name: "with prometheusAddr set",
+			configYAML: `
+prometheusAddr: ":8888"
+services:
+  - name: test
+    upstream: http://localhost:8080
+`,
+			expectedPromAddr: ":8888",
+		},
+		{
+			name: "without prometheusAddr (default)",
+			configYAML: `
+services:
+  - name: test
+    upstream: http://localhost:8080
+`,
+			expectedPromAddr: ":9099", // Default applied in cli.go
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tmpDir := t.TempDir()
+			configPath := filepath.Join(tmpDir, "config.yaml")
+			err := os.WriteFile(configPath, []byte(tt.configYAML), 0600)
+			require.NoError(t, err)
+
+			cfg, err := LoadConfig(configPath)
+			require.NoError(t, err)
+
+			// If prometheusAddr is empty, apply default
+			prometheusAddr := cfg.PrometheusAddr
+			if prometheusAddr == "" {
+				prometheusAddr = ":9099"
+			}
+
+			assert.Equal(t, tt.expectedPromAddr, prometheusAddr)
+
+			// Verify it's passed to ToTailnetSrv
+			ts := cfg.Services[0].ToTailnetSrv(prometheusAddr)
+			assert.Equal(t, tt.expectedPromAddr, ts.PrometheusAddr)
+		})
+	}
 }

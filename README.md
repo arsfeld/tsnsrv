@@ -279,15 +279,17 @@ tsnsrv \
   -service "name=internal-api,upstream=http://localhost:8081,funnel=false"
 ```
 
-**Available configuration keys** (comma-separated `key=value` pairs):
+**Available service configuration keys** (comma-separated `key=value` pairs within `-service` flag):
 - **Required**: `name`, `upstream`
 - **Tailscale**: `ephemeral`, `tag`, `stateDir`, `authkeyPath`
 - **Network**: `funnel`, `funnelOnly`, `listenAddr`, `plaintext`
 - **Proxy**: `recommendedProxyHeaders`, `prefix`, `stripPrefix`, `upstreamHeader`
 - **Auth**: `authURL`, `authPath`, `authTimeout`, `authCopyHeader`, `authInsecureHTTPS`, `authBypassForTailnet`
 - **Security**: `insecureHTTPS`, `upstreamAllowInsecureCiphers`
-- **Monitoring**: `prometheusAddr`
 - And more (see CLAUDE.md for complete list)
+
+**Process-level flags** (apply to all services):
+- `-prometheusAddr` - Address for Prometheus metrics and pprof endpoints (default: `:9099`)
 
 **Boolean values**: `true`/`false`, `yes`/`no`, `1`/`0` (case-insensitive)
 
@@ -301,9 +303,11 @@ tsnsrv -service "name=web,upstream=http://localhost:8080,tag=tag:web,tag=tag:pro
 **Complete example with auth:**
 ```sh
 tsnsrv \
+  -prometheusAddr=":9099" \
   -service "name=web-app,upstream=http://localhost:8080,funnel=true,authURL=http://authelia:9091,authCopyHeader=Remote-User:,authCopyHeader=Remote-Groups:,authBypassForTailnet=true" \
   -service "name=internal-api,upstream=http://localhost:8081,funnel=false,tag=tag:api"
 ```
+*Note: The `-prometheusAddr` flag applies to all services in the process.*
 
 **Note**: The three modes (single-service CLI, config file, and multi-service CLI) are mutually exclusive - you cannot mix them.
 

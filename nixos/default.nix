@@ -263,12 +263,6 @@
         defaultText = lib.literalExpression "config.services.tsnsrv.defaults.authBypassForTailnet";
       };
 
-      prometheusAddr = mkOption {
-        description = "Address to expose Prometheus metrics and pprof endpoints on for this service. Set to null to disable. Note: In multi-service mode, only one service should have this set (typically the first).";
-        type = with types; nullOr str;
-        default = null;
-      };
-
       extraArgs = mkOption {
         description = "Extra arguments to pass to this tsnsrv process.";
         type = types.listOf types.str;
@@ -381,8 +375,6 @@
     readHeaderTimeout = service.readHeaderTimeout;
   } // lib.optionalAttrs service.tsnetVerbose {
     tsnetVerbose = true;
-  } // lib.optionalAttrs (service.prometheusAddr != null) {
-    prometheusAddr = service.prometheusAddr;
   } // lib.optionalAttrs (stateBaseDir != null) {
     # Each service gets its own subdirectory within the state directory
     stateDir = "${stateBaseDir}/${name}";
@@ -394,27 +386,27 @@
   # Generate YAML config for multi-service mode
   # This generates a template that will be expanded at runtime with systemd variables
   generateMultiServiceConfig = {services, stateBaseDir ? null, authKeyPath ? null, prometheusAddr ? ":9099"}: let
-    # Convert services to list and set prometheus only on first service (if not already set)
+    # Convert services to list
     serviceNames = lib.attrNames services;
-    firstServiceName = lib.head serviceNames;
 
-    servicesList = lib.imap1 (idx: name: let
+    servicesList = map (name: let
       service = services.${name};
       # Generate base service YAML
       serviceYaml = serviceToYaml {
         inherit name service stateBaseDir authKeyPath;
       };
     in
-      # If this service doesn't have prometheusAddr set, and it's the first service,
-      # and prometheusAddr parameter is non-null, then set it
-      if idx == 1 && prometheusAddr != null && service.prometheusAddr == null
-      then serviceYaml // { prometheusAddr = prometheusAddr; }
-      else serviceYaml
+      serviceYaml
     ) serviceNames;
   in pkgs.writeText "tsnsrv-config.yaml" (
-    lib.generators.toYAML {} {
-      services = servicesList;
-    }
+    lib.generators.toYAML {} (
+      # prometheusAddr is now a top-level field
+      {
+        services = servicesList;
+      } // lib.optionalAttrs (prometheusAddr != null) {
+        prometheusAddr = prometheusAddr;
+      }
+    )
   );
 in {
   options = with lib; {
@@ -545,16 +537,16 @@ in {
         default = false;
       };
 
-      prometheusAddr = mkOption {
-        description = "Address to expose Prometheus metrics and pprof endpoints on. Set to null to disable.";
-        type = with types; nullOr str;
-        default = ":9099";
-      };
-
       urlParts = mkOption {
         description = "Default URL parts for tsnsrv services. Each service will have the parts here interpolated onto its .toURL option by default.";
         type = types.submodule urlPartsSubmodule;
       };
+    };
+
+    services.tsnsrv.prometheusAddr = mkOption {
+      description = "Address to expose Prometheus metrics and pprof endpoints on for the entire tsnsrv process. Set to null to disable.";
+      type = with types; nullOr str;
+      default = ":9099";
     };
 
     services.tsnsrv.services = mkOption {
@@ -658,7 +650,7 @@ in {
             services = config.services.tsnsrv.services;
             stateBaseDir = "/var/lib/tsnsrv-all";
             authKeyPath = "/run/credentials/tsnsrv-all.service/authKey";
-            prometheusAddr = config.services.tsnsrv.defaults.prometheusAddr;
+            prometheusAddr = config.services.tsnsrv.prometheusAddr;
           };
           # Use first service for loginServerUrl, or null
           firstService = lib.head (lib.attrValues config.services.tsnsrv.services);

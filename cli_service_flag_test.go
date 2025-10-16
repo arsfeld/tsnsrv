@@ -95,11 +95,9 @@ func TestServiceFlagParsing(t *testing.T) {
 			},
 		},
 		{
-			name:      "prometheus address",
-			flagValue: "name=test,upstream=http://localhost:80,prometheusAddr=:9100",
-			validate: func(t *testing.T, svc ServiceConfig) {
-				assert.Equal(t, ":9100", svc.PrometheusAddr)
-			},
+			name:        "prometheusAddr is not valid in service flags (process-level only)",
+			flagValue:   "name=test,upstream=http://localhost:80,prometheusAddr=:9100",
+			expectError: true,
 		},
 		{
 			name:        "missing name",

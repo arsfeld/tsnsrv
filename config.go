@@ -11,7 +11,8 @@ import (
 
 // Config represents a multi-service configuration file
 type Config struct {
-	Services []ServiceConfig `yaml:"services"`
+	PrometheusAddr string          `yaml:"prometheusAddr,omitempty"`
+	Services       []ServiceConfig `yaml:"services"`
 }
 
 // ServiceConfig represents configuration for a single service
@@ -66,9 +67,6 @@ type ServiceConfig struct {
 	// Timeouts and performance
 	Timeout           time.Duration `yaml:"timeout,omitempty"`
 	ReadHeaderTimeout time.Duration `yaml:"readHeaderTimeout,omitempty"`
-
-	// Monitoring
-	PrometheusAddr string `yaml:"prometheusAddr,omitempty"`
 
 	// Debugging
 	TsnetVerbose bool `yaml:"tsnetVerbose,omitempty"`
@@ -158,7 +156,8 @@ func (c *Config) Validate() error {
 }
 
 // ToTailnetSrv converts a ServiceConfig to TailnetSrv struct
-func (sc *ServiceConfig) ToTailnetSrv() *TailnetSrv {
+// prometheusAddr is the process-level Prometheus/pprof address
+func (sc *ServiceConfig) ToTailnetSrv(prometheusAddr string) *TailnetSrv {
 	ts := &TailnetSrv{
 		Name:                         sc.Name,
 		UpstreamTCPAddr:              sc.UpstreamTCPAddr,
@@ -176,7 +175,7 @@ func (sc *ServiceConfig) ToTailnetSrv() *TailnetSrv {
 		InsecureHTTPS:                sc.InsecureHTTPS,
 		WhoisTimeout:                 sc.WhoisTimeout,
 		SuppressWhois:                sc.SuppressWhois,
-		PrometheusAddr:               sc.PrometheusAddr,
+		PrometheusAddr:               prometheusAddr,
 		SuppressTailnetDialer:        sc.SuppressTailnetDialer,
 		ReadHeaderTimeout:            sc.ReadHeaderTimeout,
 		TsnetVerbose:                 sc.TsnetVerbose,

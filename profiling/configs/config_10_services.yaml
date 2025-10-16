@@ -1,3 +1,4 @@
+prometheusAddr: ":9099"
 services:
   - name: "test-service-1"
     upstream: "http://localhost:8080"
@@ -5,7 +6,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-1"
-    prometheusAddr: ":9099"
     suppressWhois: true
     timeout: 30s
   - name: "test-service-2"
@@ -14,7 +14,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-2"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-3"
@@ -23,7 +22,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-3"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-4"
@@ -32,7 +30,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-4"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-5"
@@ -41,7 +38,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-5"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-6"
@@ -50,7 +46,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-6"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-7"
@@ -59,7 +54,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-7"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-8"
@@ -68,7 +62,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-8"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-9"
@@ -77,7 +70,6 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-9"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s
   - name: "test-service-10"
@@ -86,6 +78,5 @@ services:
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-10"
-    prometheusAddr: ""
     suppressWhois: true
     timeout: 30s

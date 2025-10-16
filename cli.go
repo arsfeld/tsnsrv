@@ -163,7 +163,6 @@ func (s *serviceFlags) Set(value string) error {
 		ListenAddr:              ":443",
 		RecommendedProxyHeaders: true,
 		StripPrefix:             true,
-		PrometheusAddr:          ":9099",
 		AuthPath:                "/api/authz/forward-auth",
 		AuthTimeout:             5 * time.Second,
 		WhoisTimeout:            1 * time.Second,
@@ -362,10 +361,6 @@ func (s *serviceFlags) setServiceField(svc *ServiceConfig, key, value string) er
 		}
 		svc.ReadHeaderTimeout = d
 
-	// Monitoring
-	case "prometheusAddr":
-		svc.PrometheusAddr = value
-
 	// Debugging
 	case "tsnetVerbose":
 		v, err := parseBool(value)
@@ -526,9 +521,15 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 			return nil, root, fmt.Errorf("loading config file: %w", err)
 		}
 
+		// Use default PrometheusAddr if not specified
+		prometheusAddr := cfg.PrometheusAddr
+		if prometheusAddr == "" {
+			prometheusAddr = ":9099"
+		}
+
 		var validServices []*ValidTailnetSrv
 		for i, svcCfg := range cfg.Services {
-			ts := svcCfg.ToTailnetSrv()
+			ts := svcCfg.ToTailnetSrv(prometheusAddr)
 			valid, err := ts.validate([]string{svcCfg.Upstream})
 			if err != nil {
 				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)
@@ -540,9 +541,12 @@ func TailnetSrvsFromArgs(args []string) ([]*ValidTailnetSrv, *ffcli.Command, err
 
 	// Mode 2: Multi-service CLI mode
 	if hasServiceFlags {
+		// Use the top-level prometheusAddr flag (applies to all services)
+		prometheusAddr := s.PrometheusAddr
+
 		var validServices []*ValidTailnetSrv
 		for i, svcCfg := range services {
-			ts := svcCfg.ToTailnetSrv()
+			ts := svcCfg.ToTailnetSrv(prometheusAddr)
 			valid, err := ts.validate([]string{svcCfg.Upstream})
 			if err != nil {
 				return nil, root, fmt.Errorf("validating service %d (%s): %w", i, svcCfg.Name, err)

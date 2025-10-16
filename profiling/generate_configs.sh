@@ -19,8 +19,9 @@ for count in "${SERVICE_COUNTS[@]}"; do
 
   echo "Generating config for ${count} services: ${config_file}"
 
-  # Start the YAML file
+  # Start the YAML file with top-level prometheusAddr
   cat > "${config_file}" <<EOF
+prometheusAddr: ":9099"
 services:
 EOF
 
@@ -33,7 +34,6 @@ EOF
     funnel: false
     listenAddr: ":443"
     stateDir: "/tmp/tsnsrv-profile/service-${i}"
-    prometheusAddr: $([ "${i}" -eq 1 ] && echo '":9099"' || echo '""')
     suppressWhois: true
     timeout: 30s
 EOF

@@ -87,13 +87,14 @@ in
 
       # tsnsrv configuration with generated services
       services.tsnsrv = {
+        prometheusAddr = ":${toString pprofPort}"; # Top-level pprof endpoint
+
         defaults = {
           loginServerUrl = config.services.headscale.settings.server_url;
           authKeyPath = "/run/ts-authkey";
           urlParts.host = "127.0.0.1";
           timeout = "10s";
           listenAddr = ":80";
-          prometheusAddr = ":${toString pprofPort}"; # Enable pprof endpoints
           tsnetVerbose = false; # Reduce log noise
         };
 
