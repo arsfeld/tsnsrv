@@ -1,0 +1,22 @@
+File: tsnsrv
+Type: alloc_objects
+Time: 2025-10-15 21:05:33 EDT
+Showing nodes accounting for 25873546, 60.68% of 42640185 total
+Dropped 979 nodes (cum <= 213200)
+Showing top 15 nodes out of 192
+      flat  flat%   sum%        cum   cum%
+   5932857 13.91% 13.91%    9898297 23.21%  tailscale.com/portlist.(*linuxImpl).findProcessNames.func2
+   5410827 12.69% 26.60%    5410827 12.69%  syscall.ParseNetlinkMessage
+   3511585  8.24% 34.84%    3511585  8.24%  syscall.ParseNetlinkRouteAttr
+   1305282  3.06% 37.90%    1305282  3.06%  syscall.anyToSockaddr
+   1253210  2.94% 40.84%    2296342  5.39%  encoding/json.(*decodeState).literalStore
+   1108984  2.60% 43.44%    1108984  2.60%  tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+   1073801  2.52% 45.96%    1073801  2.52%  reflect.growslice
+   1032228  2.42% 48.38%    1032228  2.42%  os.newFile
+    901139  2.11% 50.49%     901139  2.11%  reflect.copyVal
+    851991  2.00% 52.49%    1179674  2.77%  net.newAddr
+    720909  1.69% 54.18%     775522  1.82%  fmt.Sprintf
+    712731  1.67% 55.85%     712731  1.67%  net/netip.Prefix.MarshalText
+    709994  1.67% 57.52%    1225946  2.88%  tailscale.com/wgengine/magicsock.(*endpoint).setEndpointsLocked
+    700815  1.64% 59.16%    5418873 12.71%  syscall.NetlinkRIB
+    647193  1.52% 60.68%     647193  1.52%  net.newLink

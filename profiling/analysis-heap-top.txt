@@ -1,0 +1,22 @@
+File: tsnsrv
+Type: inuse_space
+Time: 2025-10-15 21:05:33 EDT
+Showing nodes accounting for 2055.82MB, 93.12% of 2207.67MB total
+Dropped 367 nodes (cum <= 11.04MB)
+Showing top 15 nodes out of 73
+      flat  flat%   sum%        cum   cum%
+ 1927.61MB 87.31% 87.31%  1927.61MB 87.31%  github.com/tailscale/wireguard-go/device.(*Device).PopulatePools.func3
+   57.77MB  2.62% 89.93%    57.77MB  2.62%  github.com/klauspost/compress/zstd.(*fastBase).ensureHist
+   18.48MB  0.84% 90.77%    18.48MB  0.84%  tailscale.com/wgengine/netstack.(*Impl).getInjectInboundBuffsSizes
+   18.33MB  0.83% 91.60%    21.84MB  0.99%  syscall.NetlinkRIB
+   16.95MB  0.77% 92.37%    16.95MB  0.77%  bytes.growSlice
+    5.50MB  0.25% 92.62%    29.52MB  1.34%  tailscale.com/wgengine/magicsock.(*Conn).updateNodes
+    4.16MB  0.19% 92.80%    35.82MB  1.62%  tailscale.com/control/controlclient.(*Direct).sendMapRequest
+    2.01MB 0.091% 92.89%    14.66MB  0.66%  tailscale.com/ipn/ipnlocal.(*LocalBackend).readPoller
+       2MB 0.091% 92.99%    21.33MB  0.97%  net.interfaceTable
+    1.50MB 0.068% 93.05%  1458.26MB 66.05%  github.com/tailscale/wireguard-go/device.(*Device).RoutineReceiveIncoming
+       1MB 0.045% 93.10%    15.01MB  0.68%  tailscale.com/wgengine/magicsock.(*endpoint).updateFromNode
+    0.50MB 0.023% 93.12%   473.86MB 21.46%  github.com/tailscale/wireguard-go/device.(*Device).RoutineReadFromTUN
+         0     0% 93.12%    15.68MB  0.71%  bufio.(*Writer).Write
+         0     0% 93.12%    15.68MB  0.71%  bytes.(*Buffer).Write
+         0     0% 93.12%    16.95MB  0.77%  bytes.(*Buffer).grow

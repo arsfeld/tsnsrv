@@ -1,0 +1,100 @@
+File: tsnsrv
+Type: cpu
+Time: 2025-10-15 21:05:34 EDT
+Duration: 60s, Total samples = 72.79s (121.31%)
+Showing nodes accounting for 67s, 92.05% of 72.79s total
+Dropped 901 nodes (cum <= 0.36s)
+Showing top 30 nodes out of 91
+----------------------------------------------------------+-------------
+      flat  flat%   sum%        cum   cum%   calls calls% + context 	 	 
+----------------------------------------------------------+-------------
+                                            65.36s 99.66% |   syscall.RawSyscall6
+                                             0.13s   0.2% |   runtime.findRunnable
+    65.58s 90.09% 90.09%     65.58s 90.09%                | internal/runtime/syscall.Syscall6
+----------------------------------------------------------+-------------
+                                             0.52s 98.11% |   tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+     0.49s  0.67% 90.77%      0.53s  0.73%                | go4.org/mem.AppendFields
+----------------------------------------------------------+-------------
+                                             9.31s   100% |   tailscale.com/portlist.(*linuxImpl).AppendListeningPorts
+     0.14s  0.19% 90.96%      9.31s 12.79%                | tailscale.com/util/dirwalk.linuxWalkShallow
+                                             4.97s 53.38% |   tailscale.com/portlist.(*linuxImpl).findProcessNames.func2.1
+                                             2.62s 28.14% |   tailscale.com/util/dirwalk.sysOpen
+                                             1.42s 15.25% |   syscall.Syscall
+                                             0.09s  0.97% |   runtime.mallocgc
+----------------------------------------------------------+-------------
+                                             0.47s   100% |   runtime.mallocgc
+     0.09s  0.12% 91.08%      0.47s  0.65%                | runtime.mallocgcSmallScanNoHeader
+----------------------------------------------------------+-------------
+                                            25.30s 77.73% |   net.interfaceAddrTable
+                                             2.10s  6.45% |   tailscale.com/net/netmon.LocalAddresses
+                                             1.73s  5.31% |   tailscale.com/net/portmapper.(*Client).createOrGetMapping
+     0.08s  0.11% 91.19%     32.55s 44.72%                | syscall.NetlinkRIB
+                                            21.76s 66.85% |   syscall.Syscall6
+                                             8.95s 27.50% |   syscall.Sendto
+                                             0.53s  1.63% |   syscall.Syscall
+                                             0.52s  1.60% |   syscall.RawSyscall6
+                                             0.29s  0.89% |   syscall.ParseNetlinkMessage
+                                             0.26s   0.8% |   runtime.growslice
+----------------------------------------------------------+-------------
+                                             0.29s 53.70% |   syscall.NetlinkRIB
+                                             0.18s 33.33% |   net.interfaceAddrTable
+     0.08s  0.11% 91.30%      0.54s  0.74%                | syscall.ParseNetlinkMessage
+                                             0.43s 79.63% |   runtime.growslice
+----------------------------------------------------------+-------------
+     0.07s 0.096% 91.40%     35.56s 48.85%                | tailscale.com/portlist.(*linuxImpl).AppendListeningPorts
+                                            25.76s 72.44% |   tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+                                             9.31s 26.18% |   tailscale.com/util/dirwalk.linuxWalkShallow
+----------------------------------------------------------+-------------
+                                             0.77s 63.11% |   runtime.growslice
+                                             0.09s  7.38% |   tailscale.com/util/dirwalk.linuxWalkShallow
+     0.06s 0.082% 91.48%      1.22s  1.68%                | runtime.mallocgc
+                                             0.47s 38.52% |   runtime.mallocgcSmallScanNoHeader
+                                             0.32s 26.23% |   runtime.(*mcache).refill
+----------------------------------------------------------+-------------
+                                             0.32s 84.21% |   runtime.mallocgc
+     0.05s 0.069% 91.55%      0.38s  0.52%                | runtime.(*mcache).refill
+                                             0.22s 57.89% |   runtime.systemstack
+----------------------------------------------------------+-------------
+                                            24.80s 99.72% |   tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+     0.04s 0.055% 91.61%     24.87s 34.17%                | bufio.(*Reader).ReadSlice
+                                            24.74s 99.48% |   bufio.(*Reader).fill
+----------------------------------------------------------+-------------
+                                             4.97s   100% |   tailscale.com/util/dirwalk.linuxWalkShallow
+     0.04s 0.055% 91.66%      4.97s  6.83%                | tailscale.com/portlist.(*linuxImpl).findProcessNames.func2.1
+                                             3.33s 67.00% |   syscall.Syscall6
+                                             0.89s 17.91% |   os.OpenFile
+                                             0.47s  9.46% |   syscall.Syscall
+----------------------------------------------------------+-------------
+                                            25.76s   100% |   tailscale.com/portlist.(*linuxImpl).AppendListeningPorts
+     0.04s 0.055% 91.72%     25.76s 35.39%                | tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+                                            24.80s 96.27% |   bufio.(*Reader).ReadSlice
+                                             0.52s  2.02% |   go4.org/mem.AppendFields
+----------------------------------------------------------+-------------
+     0.03s 0.041% 91.76%      0.44s   0.6%                | runtime.findRunnable
+                                             0.13s 29.55% |   internal/runtime/syscall.Syscall6
+----------------------------------------------------------+-------------
+                                             0.22s 32.84% |   runtime.(*mcache).refill
+     0.03s 0.041% 91.80%      0.67s  0.92%                | runtime.systemstack
+----------------------------------------------------------+-------------
+                                            34.84s 53.28% |   syscall.Syscall6
+                                            30.01s 45.89% |   syscall.Syscall
+                                             0.52s   0.8% |   syscall.NetlinkRIB
+     0.03s 0.041% 91.84%     65.39s 89.83%                | syscall.RawSyscall6
+                                            65.36s   100% |   internal/runtime/syscall.Syscall6
+----------------------------------------------------------+-------------
+                                             0.43s 43.43% |   syscall.ParseNetlinkMessage
+                                             0.26s 26.26% |   syscall.NetlinkRIB
+     0.02s 0.027% 91.87%      0.99s  1.36%                | runtime.growslice
+                                             0.77s 77.78% |   runtime.mallocgc
+----------------------------------------------------------+-------------
+     0.02s 0.027% 91.89%      0.52s  0.71%                | tailscale.com/tsnet.(*Server).start.func1
+                                             0.50s 96.15% |   fmt.Fprintf
+----------------------------------------------------------+-------------
+                                            18.48s 71.99% |   tailscale.com/net/netmon.InterfaceList.ForeachInterface
+                                             7.19s 28.01% |   tailscale.com/net/netmon.LocalAddresses
+     0.01s 0.014% 91.91%     25.67s 35.27%                | net.(*Interface).Addrs
+                                            25.66s   100% |   net.interfaceAddrTable
+----------------------------------------------------------+-------------
+                                            25.66s   100% |   net.(*Interface).Addrs
+     0.01s 0.014% 91.92%     25.66s 35.25%                | net.interfaceAddrTable
+                                            25.30s 98.60% |   syscall.NetlinkRIB

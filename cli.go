@@ -654,6 +654,12 @@ func (s *ValidTailnetSrv) mintAuthKey(ctx context.Context, authkey string) (stri
 }
 
 func (s *ValidTailnetSrv) Run(ctx context.Context) error {
+	// Disable Tailscale port listing to reduce CPU usage by ~50%.
+	// Port listing polls /proc/net/tcp* and /proc/[pid]/ every 1 second on Linux,
+	// consuming significant CPU in multi-service deployments.
+	// See: https://github.com/tailscale/tailscale/issues/10430
+	os.Setenv("TS_DEBUG_DISABLE_PORTLIST", "true")
+
 	srv := &tsnet.Server{
 		Hostname:   s.Name,
 		Dir:        s.StateDir,

@@ -1,0 +1,28 @@
+File: tsnsrv
+Type: cpu
+Time: 2025-10-15 21:05:34 EDT
+Duration: 60s, Total samples = 72.79s (121.31%)
+Showing nodes accounting for 66.92s, 91.94% of 72.79s total
+Dropped 901 nodes (cum <= 0.36s)
+Showing top 20 nodes out of 91
+      flat  flat%   sum%        cum   cum%
+    65.58s 90.09% 90.09%     65.58s 90.09%  internal/runtime/syscall.Syscall6
+     0.49s  0.67% 90.77%      0.53s  0.73%  go4.org/mem.AppendFields
+     0.14s  0.19% 90.96%      9.31s 12.79%  tailscale.com/util/dirwalk.linuxWalkShallow
+     0.09s  0.12% 91.08%      0.47s  0.65%  runtime.mallocgcSmallScanNoHeader
+     0.08s  0.11% 91.19%     32.55s 44.72%  syscall.NetlinkRIB
+     0.08s  0.11% 91.30%      0.54s  0.74%  syscall.ParseNetlinkMessage
+     0.07s 0.096% 91.40%     35.56s 48.85%  tailscale.com/portlist.(*linuxImpl).AppendListeningPorts
+     0.06s 0.082% 91.48%      1.22s  1.68%  runtime.mallocgc
+     0.05s 0.069% 91.55%      0.38s  0.52%  runtime.(*mcache).refill
+     0.04s 0.055% 91.61%     24.87s 34.17%  bufio.(*Reader).ReadSlice
+     0.04s 0.055% 91.66%      4.97s  6.83%  tailscale.com/portlist.(*linuxImpl).findProcessNames.func2.1
+     0.04s 0.055% 91.72%     25.76s 35.39%  tailscale.com/portlist.(*linuxImpl).parseProcNetFile
+     0.03s 0.041% 91.76%      0.44s   0.6%  runtime.findRunnable
+     0.03s 0.041% 91.80%      0.67s  0.92%  runtime.systemstack
+     0.03s 0.041% 91.84%     65.39s 89.83%  syscall.RawSyscall6
+     0.02s 0.027% 91.87%      0.99s  1.36%  runtime.growslice
+     0.02s 0.027% 91.89%      0.52s  0.71%  tailscale.com/tsnet.(*Server).start.func1
+     0.01s 0.014% 91.91%     25.67s 35.27%  net.(*Interface).Addrs
+     0.01s 0.014% 91.92%     25.66s 35.25%  net.interfaceAddrTable
+     0.01s 0.014% 91.94%      1.10s  1.51%  os.OpenFile

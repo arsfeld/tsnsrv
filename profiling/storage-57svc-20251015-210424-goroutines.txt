@@ -1,0 +1,390 @@
+goroutine profile: total 6257
+944 @ 0x4773ce 0x40fc65 0x40f812 0xc8fc85 0x47f1a1
+#	0xc8fc84	github.com/tailscale/wireguard-go/device.(*Device).RoutineDecryption+0x184	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/receive.go:244
+
+944 @ 0x4773ce 0x40fc65 0x40f812 0xc900aa 0x47f1a1
+#	0xc900a9	github.com/tailscale/wireguard-go/device.(*Device).RoutineHandshake+0x169	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/receive.go:278
+
+944 @ 0x4773ce 0x40fc65 0x40f812 0xc94007 0x47f1a1
+#	0xc94006	github.com/tailscale/wireguard-go/device.(*Device).RoutineEncryption+0x186	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/send.go:453
+
+944 @ 0x4773ce 0xe8cc39 0xe8cc1e 0xe8cd2b 0xea3629 0xea361a 0x47f1a1
+#	0xe8cc38	gvisor.dev/gvisor/pkg/sync.Gopark+0x78					gvisor.dev/gvisor@v0.0.0-20250205023644-9414b50a5633/pkg/sync/runtime_unsafe.go:33
+#	0xe8cc1d	gvisor.dev/gvisor/pkg/sleep.(*Sleeper).nextWaker+0x5d			gvisor.dev/gvisor@v0.0.0-20250205023644-9414b50a5633/pkg/sleep/sleep_unsafe.go:210
+#	0xe8cd2a	gvisor.dev/gvisor/pkg/sleep.(*Sleeper).fetch+0x2a			gvisor.dev/gvisor@v0.0.0-20250205023644-9414b50a5633/pkg/sleep/sleep_unsafe.go:257
+#	0xea3628	gvisor.dev/gvisor/pkg/sleep.(*Sleeper).Fetch+0xa8			gvisor.dev/gvisor@v0.0.0-20250205023644-9414b50a5633/pkg/sleep/sleep_unsafe.go:280
+#	0xea3619	gvisor.dev/gvisor/pkg/tcpip/transport/tcp.(*processor).start+0x99	gvisor.dev/gvisor@v0.0.0-20250205023644-9414b50a5633/pkg/tcpip/transport/tcp/dispatcher.go:291
+
+146 @ 0x4773ce 0x455037 0x6e5c87 0x47f1a1
+#	0x6e5c86	net/http.(*persistConn).writeLoop+0xe6	net/http/transport.go:2590
+
+87 @ 0x4773ce 0x478db9 0x478d99 0x487e25 0xe8b9cc 0xe8bbea 0xe8ad9c 0x6c29f9 0x645e63 0x645f93 0x6c87e5 0x47f1a1
+#	0x478d98	sync.runtime_notifyListWait+0x138			runtime/sema.go:597
+#	0x487e24	sync.(*Cond).Wait+0x84					sync/cond.go:71
+#	0xe8b9cb	tailscale.com/net/memnet.(*Pipe).readOrBlock+0x22b	tailscale.com@v1.86.5/net/memnet/pipe.go:66
+#	0xe8bbe9	tailscale.com/net/memnet.(*Pipe).Read+0x49		tailscale.com@v1.86.5/net/memnet/pipe.go:82
+#	0xe8ad9b	tailscale.com/net/memnet.(*connHalf).Read+0x1b		tailscale.com@v1.86.5/net/memnet/conn.go:75
+#	0x6c29f8	net/http.(*connReader).Read+0x158			net/http/server.go:798
+#	0x645e62	bufio.(*Reader).fill+0x102				bufio/bufio.go:113
+#	0x645f92	bufio.(*Reader).Peek+0x52				bufio/bufio.go:152
+#	0x6c87e4	net/http.(*conn).serve+0x784				net/http/server.go:2137
+
+87 @ 0x4773ce 0x478db9 0x478d99 0x487e25 0xe8b9cc 0xe8bbea 0xe8ad9c 0x6e3867 0x645e63 0x645f93 0x6e4372 0x47f1a1
+#	0x478d98	sync.runtime_notifyListWait+0x138			runtime/sema.go:597
+#	0x487e24	sync.(*Cond).Wait+0x84					sync/cond.go:71
+#	0xe8b9cb	tailscale.com/net/memnet.(*Pipe).readOrBlock+0x22b	tailscale.com@v1.86.5/net/memnet/pipe.go:66
+#	0xe8bbe9	tailscale.com/net/memnet.(*Pipe).Read+0x49		tailscale.com@v1.86.5/net/memnet/pipe.go:82
+#	0xe8ad9b	tailscale.com/net/memnet.(*connHalf).Read+0x1b		tailscale.com@v1.86.5/net/memnet/conn.go:75
+#	0x6e3866	net/http.(*persistConn).Read+0x46			net/http/transport.go:2122
+#	0x645e62	bufio.(*Reader).fill+0x102				bufio/bufio.go:113
+#	0x645f92	bufio.(*Reader).Peek+0x52				bufio/bufio.go:152
+#	0x6e4371	net/http.(*persistConn).readLoop+0x171			net/http/transport.go:2275
+
+59 @ 0x4773ce 0x40fc65 0x40f7f2 0xb1fa85 0x47f1a1
+#	0xb1fa84	tailscale.com/control/controlclient.(*Auto).authRoutine+0x924	tailscale.com@v1.86.5/control/controlclient/auto.go:329
+
+59 @ 0x4773ce 0x40fc65 0x40f7f2 0xd0d0d9 0xd0f193 0x47f1a1
+#	0xd0d0d8	tailscale.com/net/tstun.(*fakeTUN).Read+0x18		tailscale.com@v1.86.5/net/tstun/fake.go:37
+#	0xd0f192	tailscale.com/net/tstun.(*Wrapper).pollVector+0x232	tailscale.com@v1.86.5/net/tstun/wrap.go:461
+
+59 @ 0x4773ce 0x40fc65 0x40f7f2 0xf490c5 0xf4c2ea 0x47f1a1
+#	0xf490c4	github.com/boinkor-net/tsnsrv.(*ValidTailnetSrv).Run+0xe04	github.com/boinkor-net/tsnsrv/cli.go:786
+#	0xf4c2e9	github.com/boinkor-net/tsnsrv.(*Orchestrator).Run.func1+0x109	github.com/boinkor-net/tsnsrv/orchestrator.go:64
+
+59 @ 0x4773ce 0x40fc65 0x40f812 0xc96fd9 0x47f1a1
+#	0xc96fd8	github.com/tailscale/wireguard-go/device.(*Device).RoutineTUNEventReader+0x78	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/tun.go:19
+
+59 @ 0x4773ce 0x40fc65 0x40f812 0xd11aab 0xc92df8 0x47f1a1
+#	0xd11aaa	tailscale.com/net/tstun.(*Wrapper).Read+0xca					tailscale.com@v1.86.5/net/tstun/wrap.go:929
+#	0xc92df7	github.com/tailscale/wireguard-go/device.(*Device).RoutineReadFromTUN+0x2d7	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/send.go:249
+
+59 @ 0x4773ce 0x40fc65 0x40f812 0xd6bb5a 0xc8ede4 0x47f1a1
+#	0xd6bb59	tailscale.com/wgengine/magicsock.(*connBind).receiveDERP+0x119			tailscale.com@v1.86.5/wgengine/magicsock/derp.go:714
+#	0xc8ede3	github.com/tailscale/wireguard-go/device.(*Device).RoutineReceiveIncoming+0x3c3	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/receive.go:110
+
+59 @ 0x4773ce 0x40fc65 0x40f812 0xdba4a5 0x47f1a1
+#	0xdba4a4	tailscale.com/wgengine.NewUserspaceEngine.func7+0x44	tailscale.com@v1.86.5/wgengine/userspace.go:488
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4eee5a 0x4eee48 0x58b685 0x598665 0x5f957b 0x513cd8 0x5f975e 0x5f686f 0x5fd045 0x5fd046 0x645e63 0x646587 0xd1e758 0xd204e5 0xd2a490 0xd2a481 0xd6a2bc 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84				runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26				internal/poll/fd_poll_runtime.go:84
+#	0x4eee59	internal/poll.(*pollDesc).waitRead+0x279			internal/poll/fd_poll_runtime.go:89
+#	0x4eee47	internal/poll.(*FD).Read+0x267					internal/poll/fd_unix.go:165
+#	0x58b684	net.(*netFD).Read+0x24						net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44						net/net.go:194
+#	0x5f957a	crypto/tls.(*atLeastReader).Read+0x3a				crypto/tls/conn.go:809
+#	0x513cd7	bytes.(*Buffer).ReadFrom+0x97					bytes/buffer.go:211
+#	0x5f975d	crypto/tls.(*Conn).readFromUntil+0xdd				crypto/tls/conn.go:831
+#	0x5f686e	crypto/tls.(*Conn).readRecordOrCCS+0x3ce			crypto/tls/conn.go:629
+#	0x5fd044	crypto/tls.(*Conn).readRecord+0x144				crypto/tls/conn.go:591
+#	0x5fd045	crypto/tls.(*Conn).Read+0x145					crypto/tls/conn.go:1385
+#	0x645e62	bufio.(*Reader).fill+0x102					bufio/bufio.go:113
+#	0x646586	bufio.(*Reader).ReadByte+0x26					bufio/bufio.go:273
+#	0xd1e757	tailscale.com/derp.readFrameHeader+0x17				tailscale.com@v1.86.5/derp/derp.go:198
+#	0xd204e4	tailscale.com/derp.(*Client).recvTimeout+0x1c4			tailscale.com@v1.86.5/derp/derp_client.go:505
+#	0xd2a48f	tailscale.com/derp.(*Client).Recv+0x6f				tailscale.com@v1.86.5/derp/derp_client.go:479
+#	0xd2a480	tailscale.com/derp/derphttp.(*Client).RecvDetail+0x60		tailscale.com@v1.86.5/derp/derphttp/derphttp_client.go:1088
+#	0xd6a2bb	tailscale.com/wgengine/magicsock.(*Conn).runDerpReader+0x47b	tailscale.com@v1.86.5/wgengine/magicsock/derp.go:560
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4eee5a 0x4eee48 0x58b685 0x598665 0x5f957b 0x513cd8 0x5f975e 0x5f686f 0x5fd045 0x5fd046 0x6e3867 0x645e63 0x645f93 0x6e4372 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84		runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26		internal/poll/fd_poll_runtime.go:84
+#	0x4eee59	internal/poll.(*pollDesc).waitRead+0x279	internal/poll/fd_poll_runtime.go:89
+#	0x4eee47	internal/poll.(*FD).Read+0x267			internal/poll/fd_unix.go:165
+#	0x58b684	net.(*netFD).Read+0x24				net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44				net/net.go:194
+#	0x5f957a	crypto/tls.(*atLeastReader).Read+0x3a		crypto/tls/conn.go:809
+#	0x513cd7	bytes.(*Buffer).ReadFrom+0x97			bytes/buffer.go:211
+#	0x5f975d	crypto/tls.(*Conn).readFromUntil+0xdd		crypto/tls/conn.go:831
+#	0x5f686e	crypto/tls.(*Conn).readRecordOrCCS+0x3ce	crypto/tls/conn.go:629
+#	0x5fd044	crypto/tls.(*Conn).readRecord+0x144		crypto/tls/conn.go:591
+#	0x5fd045	crypto/tls.(*Conn).Read+0x145			crypto/tls/conn.go:1385
+#	0x6e3866	net/http.(*persistConn).Read+0x46		net/http/transport.go:2122
+#	0x645e62	bufio.(*Reader).fill+0x102			bufio/bufio.go:113
+#	0x645f92	bufio.(*Reader).Peek+0x52			bufio/bufio.go:152
+#	0x6e4371	net/http.(*persistConn).readLoop+0x171		net/http/transport.go:2275
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4f1475 0x4f1463 0x58cec9 0x5a0d7b 0x5a00b0 0xe4db1e 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84				runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26				internal/poll/fd_poll_runtime.go:84
+#	0x4f1474	internal/poll.(*pollDesc).waitRead+0x294			internal/poll/fd_poll_runtime.go:89
+#	0x4f1462	internal/poll.(*FD).Accept+0x282				internal/poll/fd_unix.go:620
+#	0x58cec8	net.(*netFD).accept+0x28					net/fd_unix.go:172
+#	0x5a0d7a	net.(*TCPListener).accept+0x1a					net/tcpsock_posix.go:159
+#	0x5a00af	net.(*TCPListener).Accept+0x2f					net/tcpsock.go:380
+#	0xe4db1d	tailscale.com/ipn/ipnlocal.(*peerAPIListener).serve+0x9d	tailscale.com@v1.86.5/ipn/ipnlocal/peerapi.go:158
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4f1b45 0x4f1b2d 0x4fb96a 0x9923c6 0x991cd8 0x98e8de 0x996b19 0x995bfe 0x995967 0x995845 0x9dec95 0x9dcefb 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84			runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26			internal/poll/fd_poll_runtime.go:84
+#	0x4f1b44	internal/poll.(*pollDesc).waitRead+0x124		internal/poll/fd_poll_runtime.go:89
+#	0x4f1b2c	internal/poll.(*FD).RawRead+0x10c			internal/poll/fd_unix.go:717
+#	0x4fb969	os.(*rawConn).Read+0x49					os/rawconn.go:31
+#	0x9923c5	github.com/mdlayher/socket.rwT[...]+0x625		github.com/mdlayher/socket@v0.5.0/conn.go:795
+#	0x991cd7	github.com/mdlayher/socket.readT[...]+0x97		github.com/mdlayher/socket@v0.5.0/conn.go:666
+#	0x98e8dd	github.com/mdlayher/socket.(*Conn).Recvmsg+0x13d	github.com/mdlayher/socket@v0.5.0/conn.go:572
+#	0x996b18	github.com/mdlayher/netlink.(*conn).Receive+0xb8	github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/conn_linux.go:130
+#	0x995bfd	github.com/mdlayher/netlink.(*Conn).receive+0x5d	github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/conn.go:279
+#	0x995966	github.com/mdlayher/netlink.(*Conn).lockedReceive+0x26	github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/conn.go:238
+#	0x995844	github.com/mdlayher/netlink.(*Conn).Receive+0x84	github.com/mdlayher/netlink@v1.7.3-0.20250113171957-fbb4dce95f42/conn.go:231
+#	0x9dec94	tailscale.com/net/netmon.(*nlConn).Receive+0x34		tailscale.com@v1.86.5/net/netmon/netmon_linux.go:94
+#	0x9dcefa	tailscale.com/net/netmon.(*Monitor).pump+0x7a		tailscale.com@v1.86.5/net/netmon/netmon.go:352
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4f1b45 0x4f1b2d 0x59c636 0xa3a630 0xa3b225 0xa3d277 0xa3d26f 0xd61a5e 0xd9bb77 0xd852db 0xc8ede4 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84							runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26							internal/poll/fd_poll_runtime.go:84
+#	0x4f1b44	internal/poll.(*pollDesc).waitRead+0x124						internal/poll/fd_poll_runtime.go:89
+#	0x4f1b2c	internal/poll.(*FD).RawRead+0x10c							internal/poll/fd_unix.go:717
+#	0x59c635	net.(*rawConn).Read+0x35								net/rawconn.go:44
+#	0xa3a62f	golang.org/x/net/internal/socket.(*syscaller).recvmmsg+0x6f				golang.org/x/net@v0.40.0/internal/socket/mmsghdr_unix.go:120
+#	0xa3b224	golang.org/x/net/internal/socket.(*Conn).recvMsgs+0x164					golang.org/x/net@v0.40.0/internal/socket/rawconn_mmsg.go:24
+#	0xa3d276	golang.org/x/net/internal/socket.(*Conn).RecvMsgs+0x56					golang.org/x/net@v0.40.0/internal/socket/socket.go:267
+#	0xa3d26e	golang.org/x/net/ipv4.(*payloadHandler).ReadBatch+0x4e					golang.org/x/net@v0.40.0/ipv4/batch.go:80
+#	0xd61a5d	tailscale.com/wgengine/magicsock.(*linuxBatchingConn).ReadBatch+0x7d			tailscale.com@v1.86.5/wgengine/magicsock/batching_conn_linux.go:311
+#	0xd9bb76	tailscale.com/wgengine/magicsock.(*RebindingUDPConn).ReadBatch+0x96			tailscale.com@v1.86.5/wgengine/magicsock/rebinding_conn.go:132
+#	0xd852da	tailscale.com/wgengine/magicsock.(*Conn).receiveIPv4.(*Conn).mkReceiveFunc.func1+0x29a	tailscale.com@v1.86.5/wgengine/magicsock/magicsock.go:1719
+#	0xc8ede3	github.com/tailscale/wireguard-go/device.(*Device).RoutineReceiveIncoming+0x3c3		github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/receive.go:110
+
+59 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4f1b45 0x4f1b2d 0x59c636 0xa3a630 0xa3b225 0xa3e7f7 0xa3e7ef 0xd61a5e 0xd9bb77 0xd85efb 0xc8ede4 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84							runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26							internal/poll/fd_poll_runtime.go:84
+#	0x4f1b44	internal/poll.(*pollDesc).waitRead+0x124						internal/poll/fd_poll_runtime.go:89
+#	0x4f1b2c	internal/poll.(*FD).RawRead+0x10c							internal/poll/fd_unix.go:717
+#	0x59c635	net.(*rawConn).Read+0x35								net/rawconn.go:44
+#	0xa3a62f	golang.org/x/net/internal/socket.(*syscaller).recvmmsg+0x6f				golang.org/x/net@v0.40.0/internal/socket/mmsghdr_unix.go:120
+#	0xa3b224	golang.org/x/net/internal/socket.(*Conn).recvMsgs+0x164					golang.org/x/net@v0.40.0/internal/socket/rawconn_mmsg.go:24
+#	0xa3e7f6	golang.org/x/net/internal/socket.(*Conn).RecvMsgs+0x56					golang.org/x/net@v0.40.0/internal/socket/socket.go:267
+#	0xa3e7ee	golang.org/x/net/ipv6.(*payloadHandler).ReadBatch+0x4e					golang.org/x/net@v0.40.0/ipv6/batch.go:71
+#	0xd61a5d	tailscale.com/wgengine/magicsock.(*linuxBatchingConn).ReadBatch+0x7d			tailscale.com@v1.86.5/wgengine/magicsock/batching_conn_linux.go:311
+#	0xd9bb76	tailscale.com/wgengine/magicsock.(*RebindingUDPConn).ReadBatch+0x96			tailscale.com@v1.86.5/wgengine/magicsock/rebinding_conn.go:132
+#	0xd85efa	tailscale.com/wgengine/magicsock.(*Conn).receiveIPv6.(*Conn).mkReceiveFunc.func1+0x29a	tailscale.com@v1.86.5/wgengine/magicsock/magicsock.go:1719
+#	0xc8ede3	github.com/tailscale/wireguard-go/device.(*Device).RoutineReceiveIncoming+0x3c3		github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/receive.go:110
+
+59 @ 0x4773ce 0x455037 0x992b95 0x47f1a1
+#	0x992b94	github.com/mdlayher/socket.rwT[...].func2+0xb4	github.com/mdlayher/socket@v0.5.0/conn.go:778
+
+59 @ 0x4773ce 0x455037 0x9bfae7 0x9c1133 0x47f1a1
+#	0x9bfae6	tailscale.com/util/eventbus.(*Bus).pump+0x406	tailscale.com@v1.86.5/util/eventbus/bus.go:156
+#	0x9c1132	tailscale.com/util/eventbus.(*worker).run+0x52	tailscale.com@v1.86.5/util/eventbus/bus.go:246
+
+59 @ 0x4773ce 0x455037 0x9c2c89 0x9c1133 0x47f1a1
+#	0x9c2c88	tailscale.com/util/eventbus.(*subscribeState).pump+0x328	tailscale.com@v1.86.5/util/eventbus/subscribe.go:97
+#	0x9c1132	tailscale.com/util/eventbus.(*worker).run+0x52			tailscale.com@v1.86.5/util/eventbus/bus.go:246
+
+59 @ 0x4773ce 0x455037 0x9dd408 0x47f1a1
+#	0x9dd407	tailscale.com/net/netmon.(*Monitor).debounce+0xc7	tailscale.com@v1.86.5/net/netmon/netmon.go:398
+
+59 @ 0x4773ce 0x455037 0xaf52e5 0xaf4616 0x47f1a1
+#	0xaf52e4	golang.org/x/net/http2.(*clientStream).writeRequest+0xc84	golang.org/x/net@v0.40.0/http2/transport.go:1570
+#	0xaf4615	golang.org/x/net/http2.(*clientStream).doRequest+0x55		golang.org/x/net@v0.40.0/http2/transport.go:1431
+
+59 @ 0x4773ce 0x455037 0xb1e072 0x47f1a1
+#	0xb1e071	tailscale.com/control/controlclient.(*Auto).updateRoutine+0x491	tailscale.com@v1.86.5/control/controlclient/auto.go:76
+
+59 @ 0x4773ce 0x455037 0xb2a23d 0x47f1a1
+#	0xb2a23c	tailscale.com/control/controlclient.(*Direct).sendMapRequest.func1+0x7c	tailscale.com@v1.86.5/control/controlclient/direct.go:962
+
+59 @ 0x4773ce 0x455037 0xc810af 0x47f1a1
+#	0xc810ae	github.com/tailscale/wireguard-go/ratelimiter.(*Ratelimiter).Init.func1+0x8e	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/ratelimiter/ratelimiter.go:68
+
+59 @ 0x4773ce 0x455037 0xd0ecc6 0x47f1a1
+#	0xd0ecc5	tailscale.com/net/tstun.(*Wrapper).pumpEvents+0x105	tailscale.com@v1.86.5/net/tstun/wrap.go:384
+
+59 @ 0x4773ce 0x455037 0xd6b751 0x47f1a1
+#	0xd6b750	tailscale.com/wgengine/magicsock.(*Conn).runDerpWriter+0x190	tailscale.com@v1.86.5/wgengine/magicsock/derp.go:689
+
+59 @ 0x4773ce 0x455037 0xd7c337 0x47f1a1
+#	0xd7c336	tailscale.com/wgengine/magicsock.(*Conn).consumeEventbusTopics+0x1f6	tailscale.com@v1.86.5/wgengine/magicsock/magicsock.go:654
+
+59 @ 0x4773ce 0x455037 0xdba39e 0x47f1a1
+#	0xdba39d	tailscale.com/wgengine.NewUserspaceEngine.func8+0x5d	tailscale.com@v1.86.5/wgengine/userspace.go:503
+
+59 @ 0x4773ce 0x455037 0xe15eff 0xe282a5 0xb52842 0x47f1a1
+#	0xe15efe	tailscale.com/ipn/ipnlocal.(*LocalBackend).checkCaptivePortalLoop+0x15e		tailscale.com@v1.86.5/ipn/ipnlocal/local.go:2744
+#	0xe282a4	tailscale.com/ipn/ipnlocal.(*LocalBackend).enterStateLockedOnEntry.func1+0x24	tailscale.com@v1.86.5/ipn/ipnlocal/local.go:5674
+#	0xb52841	tailscale.com/util/goroutines.(*Tracker).goAndDecr+0x41				tailscale.com@v1.86.5/util/goroutines/tracker.go:30
+
+59 @ 0x4773ce 0x455037 0xe172fa 0xb52842 0x47f1a1
+#	0xe172f9	tailscale.com/ipn/ipnlocal.(*LocalBackend).readPoller+0x119	tailscale.com@v1.86.5/ipn/ipnlocal/local.go:2989
+#	0xb52841	tailscale.com/util/goroutines.(*Tracker).goAndDecr+0x41		tailscale.com@v1.86.5/util/goroutines/tracker.go:30
+
+59 @ 0x4773ce 0x455037 0xe8b15e 0x6cda6c 0xf1b512 0x47f1a1
+#	0xe8b15d	tailscale.com/net/memnet.(*Listener).Accept+0x5d	tailscale.com@v1.86.5/net/memnet/listener.go:55
+#	0x6cda6b	net/http.(*Server).Serve+0x30b				net/http/server.go:3424
+#	0xf1b511	tailscale.com/tsnet.(*Server).start.func6+0x31		tailscale.com@v1.86.5/tsnet/tsnet.go:694
+
+59 @ 0x4773ce 0x455037 0xf09ee5 0xf09e83 0xf0f9a5 0x47f1a1
+#	0xf09ee4	tailscale.com/wgengine/netstack.(*queue).ReadContext+0x84		tailscale.com@v1.86.5/wgengine/netstack/link_endpoint.go:53
+#	0xf09e82	tailscale.com/wgengine/netstack.(*linkEndpoint).ReadContext+0x22	tailscale.com@v1.86.5/wgengine/netstack/link_endpoint.go:172
+#	0xf0f9a4	tailscale.com/wgengine/netstack.(*Impl).inject+0x64			tailscale.com@v1.86.5/wgengine/netstack/netstack.go:938
+
+59 @ 0x4773ce 0x455037 0xf1ef9e 0x63e7e4 0x6cda6c 0xf49555 0xf49481 0x47f1a1
+#	0xf1ef9d	tailscale.com/tsnet.(*listener).Accept+0x5d				tailscale.com@v1.86.5/tsnet/tsnet.go:1327
+#	0x63e7e3	crypto/tls.(*listener).Accept+0x23					crypto/tls/tls.go:67
+#	0x6cda6b	net/http.(*Server).Serve+0x30b						net/http/server.go:3424
+#	0xf49554	github.com/boinkor-net/tsnsrv.(*ValidTailnetSrv).Run.func5.1+0x194	github.com/boinkor-net/tsnsrv/cli.go:783
+#	0xf49480	github.com/boinkor-net/tsnsrv.(*ValidTailnetSrv).Run.func5+0xc0		github.com/boinkor-net/tsnsrv/cli.go:784
+
+59 @ 0x4773ce 0x4560dd 0x4560b4 0x478ba5 0x489568 0xc838a5 0x47f1a1
+#	0x478ba4	sync.runtime_SemacquireWaitGroup+0x24					runtime/sema.go:110
+#	0x489567	sync.(*WaitGroup).Wait+0x47						sync/waitgroup.go:118
+#	0xc838a4	github.com/tailscale/wireguard-go/device.newOutboundQueue.func1+0x24	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/channels.go:32
+
+59 @ 0x4773ce 0x4560dd 0x4560b4 0x478ba5 0x489568 0xc839a5 0x47f1a1
+#	0x478ba4	sync.runtime_SemacquireWaitGroup+0x24					runtime/sema.go:110
+#	0x489567	sync.(*WaitGroup).Wait+0x47						sync/waitgroup.go:118
+#	0xc839a4	github.com/tailscale/wireguard-go/device.newInboundQueue.func1+0x24	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/channels.go:50
+
+59 @ 0x4773ce 0x4560dd 0x4560b4 0x478ba5 0x489568 0xc83aa5 0x47f1a1
+#	0x478ba4	sync.runtime_SemacquireWaitGroup+0x24					runtime/sema.go:110
+#	0x489567	sync.(*WaitGroup).Wait+0x47						sync/waitgroup.go:118
+#	0xc83aa4	github.com/tailscale/wireguard-go/device.newHandshakeQueue.func1+0x24	github.com/tailscale/wireguard-go@v0.0.0-20250716170648-1d0488a3d7da/device/channels.go:68
+
+59 @ 0x4773ce 0x478db9 0x478d99 0x487e25 0xadf236 0xafacb9 0x4e2051 0xb289db 0xb28998 0xb204af 0xb2044b 0x47f1a1
+#	0x478d98	sync.runtime_notifyListWait+0x138					runtime/sema.go:597
+#	0x487e24	sync.(*Cond).Wait+0x84							sync/cond.go:71
+#	0xadf235	golang.org/x/net/http2.(*pipe).Read+0xd5				golang.org/x/net@v0.40.0/http2/pipe.go:76
+#	0xafacb8	golang.org/x/net/http2.transportResponseBody.Read+0x58			golang.org/x/net@v0.40.0/http2/transport.go:2560
+#	0x4e2050	io.ReadAtLeast+0x90							io/io.go:335
+#	0xb289da	io.ReadFull+0x1d7a							io/io.go:354
+#	0xb28997	tailscale.com/control/controlclient.(*Direct).sendMapRequest+0x1d37	tailscale.com@v1.86.5/control/controlclient/direct.go:1043
+#	0xb204ae	tailscale.com/control/controlclient.(*Direct).PollNetMap+0x34e		tailscale.com@v1.86.5/control/controlclient/direct.go:796
+#	0xb2044a	tailscale.com/control/controlclient.(*Auto).mapRoutine+0x2ea		tailscale.com@v1.86.5/control/controlclient/auto.go:521
+
+52 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4eee5a 0x4eee48 0x58b685 0x598665 0x6e5b28 0x9e94f3 0xb12f9e 0xb13692 0xb1387f 0xb1c1d1 0x646397 0x4e2051 0xad77e5 0xad77b3 0xad7e5d 0xaf8e9a 0xaf8219 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84					runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26					internal/poll/fd_poll_runtime.go:84
+#	0x4eee59	internal/poll.(*pollDesc).waitRead+0x279				internal/poll/fd_poll_runtime.go:89
+#	0x4eee47	internal/poll.(*FD).Read+0x267						internal/poll/fd_unix.go:165
+#	0x58b684	net.(*netFD).Read+0x24							net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44							net/net.go:194
+#	0x6e5b27	net/http.(*readWriteCloserBody).Read+0x87				net/http/transport.go:2575
+#	0x9e94f2	tailscale.com/net/netutil.wrappedConn.Read+0x32				tailscale.com@v1.86.5/net/netutil/netutil.go:102
+#	0xb12f9d	tailscale.com/control/controlbase.(*Conn).readNLocked+0xdd		tailscale.com@v1.86.5/control/controlbase/conn.go:115
+#	0xb13691	tailscale.com/control/controlbase.(*Conn).decryptOneLocked+0x1d1	tailscale.com@v1.86.5/control/controlbase/conn.go:223
+#	0xb1387e	tailscale.com/control/controlbase.(*Conn).Read+0xfe			tailscale.com@v1.86.5/control/controlbase/conn.go:253
+#	0xb1c1d0	tailscale.com/internal/noiseconn.(*Conn).Read+0x70			tailscale.com@v1.86.5/internal/noiseconn/conn.go:133
+#	0x646396	bufio.(*Reader).Read+0x196						bufio/bufio.go:245
+#	0x4e2050	io.ReadAtLeast+0x90							io/io.go:335
+#	0xad77e4	io.ReadFull+0x64							io/io.go:354
+#	0xad77b2	golang.org/x/net/http2.readFrameHeader+0x32				golang.org/x/net@v0.40.0/http2/frame.go:242
+#	0xad7e5c	golang.org/x/net/http2.(*Framer).ReadFrame+0x7c				golang.org/x/net@v0.40.0/http2/frame.go:506
+#	0xaf8e99	golang.org/x/net/http2.(*clientConnReadLoop).run+0xd9			golang.org/x/net@v0.40.0/http2/transport.go:2258
+#	0xaf8218	golang.org/x/net/http2.(*ClientConn).readLoop+0x78			golang.org/x/net@v0.40.0/http2/transport.go:2127
+
+42 @ 0x4773ce 0x455037 0x6e6b65 0x6dad3a 0x6ea033 0x678ae2 0x678391 0x67a9a9 0xa2d3bb 0xa2d3ab 0xa2ca32 0x47f1a1
+#	0x6e6b64	net/http.(*persistConn).roundTrip+0x784		net/http/transport.go:2826
+#	0x6dad39	net/http.(*Transport).roundTrip+0xb99		net/http/transport.go:696
+#	0x6ea032	net/http.(*Transport).RoundTrip+0x12		net/http/roundtrip.go:30
+#	0x678ae1	net/http.send+0x5e1				net/http/client.go:259
+#	0x678390	net/http.(*Client).send+0x90			net/http/client.go:180
+#	0x67a9a8	net/http.(*Client).do+0x988			net/http/client.go:728
+#	0xa2d3ba	net/http.(*Client).Do+0x3fa			net/http/client.go:587
+#	0xa2d3aa	tailscale.com/logtail.(*Logger).upload+0x3ea	tailscale.com@v1.86.5/logtail/logtail.go:530
+#	0xa2ca31	tailscale.com/logtail.(*Logger).uploading+0x411	tailscale.com@v1.86.5/logtail/logtail.go:421
+
+28 @ 0x4773ce 0x455037 0xf1ef9e 0x63e7e4 0x6cda6c 0xf49775 0xf49761 0x47f1a1
+#	0xf1ef9d	tailscale.com/tsnet.(*listener).Accept+0x5d				tailscale.com@v1.86.5/tsnet/tsnet.go:1327
+#	0x63e7e3	crypto/tls.(*listener).Accept+0x23					crypto/tls/tls.go:67
+#	0x6cda6b	net/http.(*Server).Serve+0x30b						net/http/server.go:3424
+#	0xf49774	github.com/boinkor-net/tsnsrv.(*ValidTailnetSrv).Run.func4.1+0xf4	github.com/boinkor-net/tsnsrv/cli.go:757
+#	0xf49760	github.com/boinkor-net/tsnsrv.(*ValidTailnetSrv).Run.func4+0xe0		github.com/boinkor-net/tsnsrv/cli.go:758
+
+17 @ 0x4773ce 0x455037 0xa2c246 0xa2c200 0xa2c6a8 0x47f1a1
+#	0xa2c245	tailscale.com/logtail.(*Logger).drainBlock+0x665	tailscale.com@v1.86.5/logtail/logtail.go:306
+#	0xa2c1ff	tailscale.com/logtail.(*Logger).drainPending+0x61f	tailscale.com@v1.86.5/logtail/logtail.go:361
+#	0xa2c6a7	tailscale.com/logtail.(*Logger).uploading+0x87		tailscale.com@v1.86.5/logtail/logtail.go:401
+
+7 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4eee5a 0x4eee48 0x58b685 0x598665 0x5f957b 0x513cd8 0x5f975e 0x5f686f 0x5fd045 0x5fd046 0x6e5b28 0x9e94f3 0xb12f9e 0xb13692 0xb1387f 0xb1c1d1 0x646397 0x4e2051 0xad77e5 0xad77b3 0xad7e5d 0xaf8e9a 0xaf8219 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84					runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26					internal/poll/fd_poll_runtime.go:84
+#	0x4eee59	internal/poll.(*pollDesc).waitRead+0x279				internal/poll/fd_poll_runtime.go:89
+#	0x4eee47	internal/poll.(*FD).Read+0x267						internal/poll/fd_unix.go:165
+#	0x58b684	net.(*netFD).Read+0x24							net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44							net/net.go:194
+#	0x5f957a	crypto/tls.(*atLeastReader).Read+0x3a					crypto/tls/conn.go:809
+#	0x513cd7	bytes.(*Buffer).ReadFrom+0x97						bytes/buffer.go:211
+#	0x5f975d	crypto/tls.(*Conn).readFromUntil+0xdd					crypto/tls/conn.go:831
+#	0x5f686e	crypto/tls.(*Conn).readRecordOrCCS+0x3ce				crypto/tls/conn.go:629
+#	0x5fd044	crypto/tls.(*Conn).readRecord+0x144					crypto/tls/conn.go:591
+#	0x5fd045	crypto/tls.(*Conn).Read+0x145						crypto/tls/conn.go:1385
+#	0x6e5b27	net/http.(*readWriteCloserBody).Read+0x87				net/http/transport.go:2575
+#	0x9e94f2	tailscale.com/net/netutil.wrappedConn.Read+0x32				tailscale.com@v1.86.5/net/netutil/netutil.go:102
+#	0xb12f9d	tailscale.com/control/controlbase.(*Conn).readNLocked+0xdd		tailscale.com@v1.86.5/control/controlbase/conn.go:115
+#	0xb13691	tailscale.com/control/controlbase.(*Conn).decryptOneLocked+0x1d1	tailscale.com@v1.86.5/control/controlbase/conn.go:223
+#	0xb1387e	tailscale.com/control/controlbase.(*Conn).Read+0xfe			tailscale.com@v1.86.5/control/controlbase/conn.go:253
+#	0xb1c1d0	tailscale.com/internal/noiseconn.(*Conn).Read+0x70			tailscale.com@v1.86.5/internal/noiseconn/conn.go:133
+#	0x646396	bufio.(*Reader).Read+0x196						bufio/bufio.go:245
+#	0x4e2050	io.ReadAtLeast+0x90							io/io.go:335
+#	0xad77e4	io.ReadFull+0x64							io/io.go:354
+#	0xad77b2	golang.org/x/net/http2.readFrameHeader+0x32				golang.org/x/net@v0.40.0/http2/frame.go:242
+#	0xad7e5c	golang.org/x/net/http2.(*Framer).ReadFrame+0x7c				golang.org/x/net@v0.40.0/http2/frame.go:506
+#	0xaf8e99	golang.org/x/net/http2.(*clientConnReadLoop).run+0xd9			golang.org/x/net@v0.40.0/http2/transport.go:2258
+#	0xaf8218	golang.org/x/net/http2.(*ClientConn).readLoop+0x78			golang.org/x/net@v0.40.0/http2/transport.go:2127
+
+1 @ 0x4378d1 0x4761dd 0x726731 0x726565 0x72338b 0x73cbcf 0x73d67e 0x6ca189 0x6cc024 0x6ea8ce 0x6c8685 0x47f1a1
+#	0x726730	runtime/pprof.writeRuntimeProfile+0xb0	runtime/pprof/pprof.go:796
+#	0x726564	runtime/pprof.writeGoroutine+0x44	runtime/pprof/pprof.go:755
+#	0x72338a	runtime/pprof.(*Profile).WriteTo+0x14a	runtime/pprof/pprof.go:377
+#	0x73cbce	net/http/pprof.handler.ServeHTTP+0x52e	net/http/pprof/pprof.go:272
+#	0x73d67d	net/http/pprof.Index+0xdd		net/http/pprof/pprof.go:389
+#	0x6ca188	net/http.HandlerFunc.ServeHTTP+0x28	net/http/server.go:2294
+#	0x6cc023	net/http.(*ServeMux).ServeHTTP+0x1c3	net/http/server.go:2822
+#	0x6ea8cd	net/http.serverHandler.ServeHTTP+0x8d	net/http/server.go:3301
+#	0x6c8684	net/http.(*conn).serve+0x624		net/http/server.go:2102
+
+1 @ 0x4773ce 0x40f9c7 0x40f7f2 0xf49e5c 0x47f1a1
+#	0xf49e5b	github.com/boinkor-net/tsnsrv.StartPrometheusServer.func2+0x3b	github.com/boinkor-net/tsnsrv/cli.go:826
+
+1 @ 0x4773ce 0x40fc65 0x40f812 0xf4be4e 0xf51118 0x44276b 0x47f1a1
+#	0xf4be4d	github.com/boinkor-net/tsnsrv.(*Orchestrator).Run+0x3ad	github.com/boinkor-net/tsnsrv/orchestrator.go:89
+#	0xf51117	main.main+0x117						github.com/boinkor-net/tsnsrv/cmd/tsnsrv/main.go:28
+#	0x44276a	runtime.main+0x28a					runtime/proc.go:283
+
+1 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4eee5a 0x4eee48 0x58b685 0x598665 0x6c2557 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84		runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26		internal/poll/fd_poll_runtime.go:84
+#	0x4eee59	internal/poll.(*pollDesc).waitRead+0x279	internal/poll/fd_poll_runtime.go:89
+#	0x4eee47	internal/poll.(*FD).Read+0x267			internal/poll/fd_unix.go:165
+#	0x58b684	net.(*netFD).Read+0x24				net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44				net/net.go:194
+#	0x6c2556	net/http.(*connReader).backgroundRead+0x36	net/http/server.go:690
+
+1 @ 0x4773ce 0x43b157 0x4765e5 0x4edd87 0x4f1475 0x4f1463 0x58cec9 0x5a0d7b 0x5a00b0 0x6cda6c 0xf49fc5 0x47f1a1
+#	0x4765e4	internal/poll.runtime_pollWait+0x84				runtime/netpoll.go:351
+#	0x4edd86	internal/poll.(*pollDesc).wait+0x26				internal/poll/fd_poll_runtime.go:84
+#	0x4f1474	internal/poll.(*pollDesc).waitRead+0x294			internal/poll/fd_poll_runtime.go:89
+#	0x4f1462	internal/poll.(*FD).Accept+0x282				internal/poll/fd_unix.go:620
+#	0x58cec8	net.(*netFD).accept+0x28					net/fd_unix.go:172
+#	0x5a0d7a	net.(*TCPListener).accept+0x1a					net/tcpsock_posix.go:159
+#	0x5a00af	net.(*TCPListener).Accept+0x2f					net/tcpsock.go:380
+#	0x6cda6b	net/http.(*Server).Serve+0x30b					net/http/server.go:3424
+#	0xf49fc4	github.com/boinkor-net/tsnsrv.StartPrometheusServer.func1+0xa4	github.com/boinkor-net/tsnsrv/cli.go:819
+
+1 @ 0x4773ce 0x455037 0x73b371 0x73badd 0x6ca189 0x6cc024 0x6ea8ce 0x6c8685 0x47f1a1
+#	0x73b370	net/http/pprof.sleep+0x90		net/http/pprof/pprof.go:117
+#	0x73badc	net/http/pprof.Profile+0x33c		net/http/pprof/pprof.go:163
+#	0x6ca188	net/http.HandlerFunc.ServeHTTP+0x28	net/http/server.go:2294
+#	0x6cc023	net/http.(*ServeMux).ServeHTTP+0x1c3	net/http/server.go:2822
+#	0x6ea8cd	net/http.serverHandler.ServeHTTP+0x8d	net/http/server.go:3301
+#	0x6c8684	net/http.(*conn).serve+0x624		net/http/server.go:2102
+
+1 @ 0x4773ce 0x4560dd 0x4560b4 0x478ba5 0x489568 0xf4c165 0x47f1a1
+#	0x478ba4	sync.runtime_SemacquireWaitGroup+0x24				runtime/sema.go:110
+#	0x489567	sync.(*WaitGroup).Wait+0x47					sync/waitgroup.go:118
+#	0xf4c164	github.com/boinkor-net/tsnsrv.(*Orchestrator).Run.func2+0x24	github.com/boinkor-net/tsnsrv/orchestrator.go:83
+
+1 @ 0x4773ce 0x47b4c5 0x726bca 0x47f1a1
+#	0x47b4c4	time.Sleep+0x164			runtime/time.go:338
+#	0x726bc9	runtime/pprof.profileWriter+0x49	runtime/pprof/pprof.go:871
+
+1 @ 0x498625 0x496a98 0x4eee8e 0x4eee76 0x4eed11 0x58b685 0x598665 0x6c2557 0x47f1a1
+#	0x498624	syscall.Syscall+0x24				syscall/syscall_linux.go:73
+#	0x496a97	syscall.read+0x37				syscall/zsyscall_linux_amd64.go:736
+#	0x4eee8d	syscall.Read+0x2ad				syscall/syscall_unix.go:183
+#	0x4eee75	internal/poll.ignoringEINTRIO+0x295		internal/poll/fd_unix.go:745
+#	0x4eed10	internal/poll.(*FD).Read+0x130			internal/poll/fd_unix.go:161
+#	0x58b684	net.(*netFD).Read+0x24				net/fd_posix.go:55
+#	0x598664	net.(*conn).Read+0x44				net/net.go:194
+#	0x6c2556	net/http.(*connReader).backgroundRead+0x36	net/http/server.go:690
+
