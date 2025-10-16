@@ -549,6 +549,18 @@ in {
       default = ":9099";
     };
 
+    services.tsnsrv.separateProcesses = mkOption {
+      description = ''
+        Run each service in a separate systemd unit (tsnsrv-{name}) instead of running all services in a single process (tsnsrv-all).
+
+        When false (default): All services run in one process via the tsnsrv-all systemd unit. This is more resource-efficient and reduces CPU overhead.
+
+        When true: Each service runs in its own systemd unit. Use this for better isolation, easier debugging per service, or independent restart/management of services.
+      '';
+      type = types.bool;
+      default = false;
+    };
+
     services.tsnsrv.services = mkOption {
       description = "tsnsrv services";
       default = {};
@@ -644,7 +656,10 @@ in {
             message = "Both certificateFile and certificateKey must either be set or null on services.tsnsrv.services.${name}";
           })
           config.services.tsnsrv.services;
+      })
 
+      # Multi-service mode: All services in one process
+      (lib.mkIf (config.services.tsnsrv.enable && !config.services.tsnsrv.separateProcesses) {
         systemd.services.tsnsrv-all = let
           configFile = generateMultiServiceConfig {
             services = config.services.tsnsrv.services;
@@ -680,6 +695,62 @@ in {
             })
             // lockedDownserviceConfig;
         };
+      })
+
+      # Separate-process mode: Each service in its own systemd unit
+      (lib.mkIf (config.services.tsnsrv.enable && config.services.tsnsrv.separateProcesses) {
+        systemd.services = let
+          serviceNames = lib.attrNames config.services.tsnsrv.services;
+          # Auto-assign unique prometheus ports: :9099, :9100, :9101, etc.
+          # Parse base prometheusAddr port, or use 9099 if null/disabled
+          basePort = let
+            addr = config.services.tsnsrv.prometheusAddr;
+          in if addr == null then null
+             else if lib.hasInfix ":" addr then
+               let port = lib.toInt (lib.last (lib.splitString ":" addr));
+               in port
+             else null;
+        in lib.listToAttrs (lib.imap0 (idx: name: let
+          service = config.services.tsnsrv.services.${name};
+          serviceName = "tsnsrv-${name}";
+          # Assign unique prometheus port for this service
+          servicePrometheusAddr = if basePort == null then null
+                                   else ":${toString (basePort + idx)}";
+        in {
+          name = serviceName;
+          value = {
+            wantedBy = ["multi-user.target"];
+            after = ["network-online.target"];
+            wants = ["network-online.target"];
+            script = let
+              prometheusArg = if servicePrometheusAddr == null then ""
+                              else "-prometheusAddr=${servicePrometheusAddr}";
+            in ''
+              exec ${lib.getExe service.package} \
+                -stateDir=/var/lib/${serviceName} \
+                -authkeyPath=/run/credentials/${serviceName}.service/authKey \
+                ${prometheusArg} \
+                ${lib.concatStringsSep " \\\n  " (serviceArgs {inherit name service;})}
+            '';
+            stopIfChanged = false;
+            serviceConfig =
+              ({
+                DynamicUser = true;
+                Restart = "always";
+                SupplementaryGroups = [config.users.groups.tsnsrv.name] ++ service.supplementalGroups;
+                StateDirectory = serviceName;
+                StateDirectoryMode = "0700";
+                LoadCredential = [
+                  "authKey:${service.authKeyPath}"
+                ];
+                Environment = ["HOME=%S/${serviceName}" "TS_DEBUG_DISABLE_PORTLIST=true"];
+              }
+              // lib.optionalAttrs (service.loginServerUrl != null) {
+                Environment = ["HOME=%S/${serviceName}" "TS_URL=${service.loginServerUrl}" "TS_DEBUG_DISABLE_PORTLIST=true"];
+              })
+              // lockedDownserviceConfig;
+          };
+        }) serviceNames);
       })
 
       (lib.mkIf config.virtualisation.oci-sidecars.tsnsrv.enable {
