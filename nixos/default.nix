@@ -553,12 +553,12 @@ in {
       description = ''
         Run each service in a separate systemd unit (tsnsrv-{name}) instead of running all services in a single process (tsnsrv-all).
 
-        When false (default): All services run in one process via the tsnsrv-all systemd unit. This is more resource-efficient and reduces CPU overhead.
+        When true (default): Each service runs in its own systemd unit. Use this for better isolation, easier debugging per service, or independent restart/management of services.
 
-        When true: Each service runs in its own systemd unit. Use this for better isolation, easier debugging per service, or independent restart/management of services.
+        When false: All services run in one process via the tsnsrv-all systemd unit. This is more resource-efficient and reduces CPU overhead.
       '';
       type = types.bool;
-      default = false;
+      default = true;
     };
 
     services.tsnsrv.services = mkOption {
